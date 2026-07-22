@@ -16,7 +16,7 @@ if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 function readDB(name) {
   const file = path.join(DATA_DIR, `${name}.json`);
   if (!fs.existsSync(file)) return [];
-  try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return []; }
+  try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch(e) { return []; }
 }
 
 function writeDB(name, data) {
