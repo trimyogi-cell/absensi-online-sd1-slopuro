@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a73e8"/>
+      <stop offset="100%" style="stop-color:#0d47a1"/>
+    </linearGradient>
+  </defs>
+  <rect width="192" height="192" rx="32" fill="url(#bg)"/>
+  <!-- Clipboard -->
+  <rect x="52" y="30" width="88" height="120" rx="8" fill="white" opacity="0.95"/>
+  <rect x="68" y="22" width="56" height="16" rx="8" fill="#ffd54f"/>
+  <circle cx="96" cy="30" r="4" fill="#1a73e8"/>
+  <!-- Checkmark lines -->
+  <rect x="66" y="58" width="8" height="8" rx="2" fill="#0f9d58"/>
+  <rect x="80" y="59" width="46" height="4" rx="2" fill="#ccc"/>
+  <rect x="66" y="78" width="8" height="8" rx="2" fill="#0f9d58"/>
+  <rect x="80" y="79" width="46" height="4" rx="2" fill="#ccc"/>
+  <rect x="66" y="98" width="8" height="8" rx="2" fill="#0f9d58"/>
+  <rect x="80" y="99" width="46" height="4" rx="2" fill="#ccc"/>
+  <rect x="66" y="118" width="8" height="8" rx="2" fill="#f4b400"/>
+  <rect x="80" y="119" width="30" height="4" rx="2" fill="#ccc"/>
+  <!-- Bottom text -->
+  <text x="96" y="170" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="bold" fill="white">SD N 1 SELOPURO</text>
+</svg>
