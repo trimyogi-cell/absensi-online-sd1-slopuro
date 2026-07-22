@@ -1012,10 +1012,11 @@
 
     async function _loadFromServer() {
       const tables = ['siswa','absensi','nilai','libur','gradeSetting','pengaturanSekolah','authUser'];
+      const ts = Date.now();
       try {
         setSyncStatus('syncing');
         const results = await Promise.all(tables.map(t => 
-          fetch('/api/' + t).then(r => r.json()).catch(() => [])
+          fetch('/api/' + t + '?_=' + ts, { cache: 'no-store' }).then(r => r.json()).catch(() => [])
         ));
         tables.forEach((t, i) => { _memStore[t] = JSON.stringify(results[i]); });
         setSyncStatus('online');
@@ -1035,7 +1036,8 @@
           const res = await fetch('/api/' + key + '/replace-all', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
+            cache: 'no-store'
           });
           if (res.ok) setSyncStatus('online');
           else setSyncStatus('error');
