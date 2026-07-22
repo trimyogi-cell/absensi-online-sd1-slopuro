@@ -1,22 +1,28 @@
 const express = require('express');
 const cors = require('cors');
-const { kv } = require('@vercel/kv');
+const { Redis } = require('@upstash/redis');
 
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL || '',
+  token: process.env.UPSTASH_REDIS_REST_TOKEN || '',
+});
+
 async function readDB(name) {
   try {
-    const data = await kv.get(name);
+    const data = await redis.get(name);
     return data || [];
   } catch (e) {
+    console.error('readDB error:', name, e.message);
     return [];
   }
 }
 
 async function writeDB(name, data) {
-  await kv.set(name, data);
+  await redis.set(name, JSON.parse(JSON.stringify(data)));
 }
 
 function generateId() {
