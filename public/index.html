@@ -415,6 +415,7 @@
                             <option value="6">Kelas 6</option>
                         </select>
                         <button class="btn btn-primary" onclick="openModalJadwal()">+ Tambah Jam</button>
+                        <button class="btn btn-warning" onclick="hapusDitandaiJadwal()">🗑️ Hapus Ditandai</button>
                         <button class="btn btn-danger" onclick="hapusSemuaJadwal()">🗑️ Hapus Semua</button>
                     </div>
                 </div>
@@ -422,7 +423,7 @@
                     <div style="overflow-x:auto;">
                     <table>
                         <thead>
-                            <tr><th>Jam Ke-</th><th>Mata Pelajaran</th><th>Guru</th><th>Jam Pelajaran</th><th>Aksi</th></tr>
+                            <tr><th><input type="checkbox" id="cekAllJadwal" onchange="toggleAllJadwal()"></th><th>Jam Ke-</th><th>Mata Pelajaran</th><th>Guru</th><th>Jam Pelajaran</th><th>Aksi</th></tr>
                         </thead>
                         <tbody id="tabelJadwal"></tbody>
                     </table>
@@ -2298,21 +2299,36 @@
 
         const tbody = document.getElementById('tabelJadwal');
         if (filtered.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#999;padding:30px;">Belum ada jadwal untuk hari ini. Klik "+ Tambah Jam" untuk menambahkan.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;padding:30px;">Belum ada jadwal untuk hari ini. Klik "+ Tambah Jam" untuk menambahkan.</td></tr>';
             return;
         }
         tbody.innerHTML = filtered.map(j => `
             <tr>
+                <td><input type="checkbox" class="cek-jadwal" data-id="${j.id}"></td>
                 <td style="text-align:center;font-weight:bold;">${j.jamke}</td>
                 <td>${j.mapel}</td>
                 <td>${j.guru}</td>
                 <td>${j.jam}</td>
                 <td>
                     <button class="btn btn-warning btn-sm" onclick="editJadwal('${j.id}')">✏️</button>
-                    <button class="btn btn-danger btn-sm" onclick="hapusJadwal('${j.id}')">🗑️</button>
                 </td>
             </tr>
         `).join('');
+    }
+
+    function toggleAllJadwal() {
+        const checked = document.getElementById('cekAllJadwal').checked;
+        document.querySelectorAll('.cek-jadwal').forEach(cb => cb.checked = checked);
+    }
+
+    function hapusDitandaiJadwal() {
+        const ids = [...document.querySelectorAll('.cek-jadwal:checked')].map(cb => cb.dataset.id);
+        if (ids.length === 0) { alert('Pilih jadwal yang ingin dihapus terlebih dahulu!'); return; }
+        if (!confirm('Yakin hapus ' + ids.length + ' jadwal yang dipilih?')) return;
+        let data = getData('jadwalPelajaran').filter(j => !ids.includes(j.id));
+        setData('jadwalPelajaran', data);
+        document.getElementById('cekAllJadwal').checked = false;
+        renderJadwal();
     }
 
     function openModalJadwal() {
@@ -3006,6 +3022,12 @@
         document.getElementById('filterTglAbsensi').value = lastDate;
         
         importDataSiswa();
+
+        const hariList = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+        const hariIni = hariList[now.getDay()];
+        if (hariIni !== 'Minggu') {
+            document.getElementById('filterHariJadwal').value = hariIni;
+        }
         renderDashboard();
         updateRealTimeClock();
         
