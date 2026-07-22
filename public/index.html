@@ -2793,7 +2793,17 @@
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('sw.js')
-                .then(reg => console.log('SW registered:', reg.scope))
+                .then(reg => {
+                    reg.addEventListener('updatefound', () => {
+                        const newWorker = reg.installing;
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'activated') {
+                                caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))));
+                                window.location.reload();
+                            }
+                        });
+                    });
+                })
                 .catch(err => console.log('SW registration failed:', err));
         });
     }
