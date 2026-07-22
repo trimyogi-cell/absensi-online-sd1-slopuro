@@ -244,7 +244,7 @@
 <div id="loginOverlay" style="display:flex;position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#1a73e8,#0d47a1);z-index:9999;align-items:center;justify-content:center;">
     <div style="background:white;border-radius:16px;padding:40px;width:360px;box-shadow:0 8px 32px rgba(0,0,0,0.3);text-align:center;">
         <div style="font-size:3em;margin-bottom:8px;">📚</div>
-        <h2 style="color:#333;margin-bottom:4px;">SD Negeri 1 Slopuro</h2>
+        <h2 style="color:#333;margin-bottom:4px;">SD Negeri 1 Selopuro</h2>
         <p style="color:#888;font-size:0.85em;margin-bottom:24px;">Aplikasi Absensi & Nilai</p>
         <div style="text-align:left;margin-bottom:16px;">
             <label style="font-size:0.85em;color:#555;font-weight:500;">Username</label>
@@ -366,18 +366,21 @@
             <div class="card">
                 <div class="card-header">
                     <h2>Data Siswa</h2>
-                    <div style="display:flex; gap:10px; align-items:center;">
+                    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
                         <div class="search-box">
                             <input type="text" id="searchSiswa" placeholder="Cari siswa..." oninput="renderSiswa()">
                         </div>
-                        <button class="btn btn-primary" onclick="openModalSiswa()">+ Tambah Siswa</button>
+                        <button class="btn btn-primary" onclick="openModalSiswa()">+ Tambah</button>
+                        <button class="btn btn-success" onclick="renderSiswa()">💾 Simpan</button>
+                        <button class="btn btn-warning" onclick="hapusDitandaiSiswa()">🗑️ Hapus Ditandai</button>
+                        <button class="btn btn-danger" onclick="hapusSemuaSiswa()">🗑️ Hapus Semua</button>
                     </div>
                 </div>
                 <div class="card-body">
                     <div style="overflow-x:auto;">
                     <table>
                         <thead>
-                            <tr><th>No</th><th>NISN</th><th>Nama Lengkap</th><th>Jenis Kelamin</th><th>Kelas</th><th>Tempat Lahir</th><th>Tanggal Lahir</th><th>Alamat</th><th>No. Ortu</th><th>Aksi</th></tr>
+                            <tr><th><input type="checkbox" id="cekAllSiswa" onchange="toggleAllSiswa()"></th><th>No</th><th>NISN</th><th>Nama Lengkap</th><th>Jenis Kelamin</th><th>Kelas</th><th>Tempat Lahir</th><th>Tanggal Lahir</th><th>Alamat</th><th>No. Ortu</th><th>Aksi</th></tr>
                         </thead>
                         <tbody id="tabelSiswa"></tbody>
                     </table>
@@ -405,6 +408,7 @@
                             </select>
                         </div>
                         <button class="btn btn-success" onclick="simpanSemuaAbsensi()">💾 Simpan Semua</button>
+                        <button class="btn btn-danger" onclick="hapusSemuaAbsensi()">🗑️ Hapus Semua</button>
                     </div>
                 </div>
                 <div class="card-body">
@@ -455,6 +459,7 @@
                             </select>
                         </div>
                         <button class="btn btn-success" onclick="simpanSemuaNilai()">💾 Simpan Semua</button>
+                        <button class="btn btn-danger" onclick="hapusSemuaNilai()">🗑️ Hapus Semua</button>
                     </div>
                 </div>
                 <div class="card-body">
@@ -485,7 +490,7 @@
         <div class="page" id="page-rekapAbsensi">
             <div class="card">
                 <div class="print-header" style="display:none;">
-                    <h2>SD NEGERI 1 SLOPURO</h2>
+                    <h2>SD NEGERI 1 SELOPURO</h2>
                     <p id="rekapAbsTitle">Rekap Absensi Bulanan</p>
                     <p id="printRekapAbsDate"></p>
                 </div>
@@ -563,7 +568,7 @@
         <div class="page" id="page-rekapNilai">
             <div class="card">
                 <div class="print-header" style="display:none;">
-                    <h2>SD NEGERI 1 SLOPURO</h2>
+                    <h2>SD NEGERI 1 SELOPURO</h2>
                     <p id="rekapNilaiTitle">Rekap Nilai Siswa</p>
                     <p id="printRekapNilaiDate"></p>
                 </div>
@@ -688,7 +693,7 @@
             <div class="card">
                 <div class="card-header">
                     <h2>Kalender Hari Libur</h2>
-                    <div style="display:flex; gap:10px; align-items:center;">
+                    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
                         <select id="filterBulanKalender" onchange="renderKalender()">
                             <option value="1">Januari</option>
                             <option value="2">Februari</option>
@@ -705,6 +710,7 @@
                         </select>
                         <select id="filterTahunKalender" onchange="renderKalender()"></select>
                         <button class="btn btn-primary" onclick="openModalLibur()">+ Libur Sekolah</button>
+                        <button class="btn btn-danger" onclick="hapusSemuaLibur()">🗑️ Hapus Semua Libur</button>
                     </div>
                 </div>
                 <div class="card-body">
@@ -1063,8 +1069,8 @@
       const tables = ['siswa','absensi','nilai','libur','gradeSetting','pengaturanSekolah','authUser'];
       try {
         setSyncStatus('syncing');
-        const results = await Promise.all(tables.map(t => _sbGet(t).catch(() => [])));
-        tables.forEach((t, i) => { _memStore[t] = JSON.stringify(results[i]); });
+        const results = await Promise.all(tables.map(t => _sbGet(t).catch(e => { console.error('[SB-LOAD]', t, e); return null; })));
+        tables.forEach((t, i) => { if (results[i] !== null) _memStore[t] = JSON.stringify(results[i]); });
         setSyncStatus('online');
       } catch(e) {
         console.error('Gagal memuat dari server:', e);
@@ -1305,7 +1311,7 @@
     // ===== CRUD SISWA =====
     function renderSiswa() {
         const data = getData('siswa');
-        const search = document.getElementById('searchSiswa').value.toLowerCase();
+        const search = document.getElementById('searchSiswa')?.value?.toLowerCase() || '';
         const filtered = data.filter(s => 
             s.nama.toLowerCase().includes(search) || 
             s.nisn.includes(search) || 
@@ -1313,10 +1319,11 @@
         );
         const tbody = document.getElementById('tabelSiswa');
         if (filtered.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:#999;padding:30px;">Tidak ada data siswa</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:#999;padding:30px;">Tidak ada data siswa</td></tr>';
         } else {
             tbody.innerHTML = filtered.map((s, i) => `
                 <tr>
+                    <td><input type="checkbox" class="cek-siswa" data-id="${s.id}"></td>
                     <td>${i + 1}</td>
                     <td>${s.nisn}</td>
                     <td>${s.nama}</td>
@@ -1333,6 +1340,40 @@
                 </tr>
             `).join('');
         }
+    }
+
+    function toggleAllSiswa() {
+        const checked = document.getElementById('cekAllSiswa').checked;
+        document.querySelectorAll('.cek-siswa').forEach(cb => cb.checked = checked);
+    }
+
+    function hapusDitandaiSiswa() {
+        const ids = [...document.querySelectorAll('.cek-siswa:checked')].map(cb => cb.dataset.id);
+        if (ids.length === 0) { alert('Pilih siswa yang ingin dihapus terlebih dahulu!'); return; }
+        if (!confirm('Yakin hapus ' + ids.length + ' siswa yang dipilih? Data absensi dan nilai terkait juga akan terhapus.')) return;
+        let data = getData('siswa');
+        const removed = data.filter(s => ids.includes(s.id));
+        data = data.filter(s => !ids.includes(s.id));
+        setData('siswa', data);
+        removed.forEach(s => {
+            let absensi = getData('absensi').filter(a => a.nisn !== s.nisn);
+            setData('absensi', absensi);
+            let nilai = getData('nilai').filter(n => n.nisn !== s.nisn);
+            setData('nilai', nilai);
+        });
+        document.getElementById('cekAllSiswa').checked = false;
+        renderSiswa();
+    }
+
+    function hapusSemuaSiswa() {
+        const data = getData('siswa');
+        if (data.length === 0) { alert('Tidak ada data siswa!'); return; }
+        if (!confirm('Yakin hapus SEMUA siswa (' + data.length + ' data)? Data absensi dan nilai juga akan terhapus!')) return;
+        setData('siswa', []);
+        setData('absensi', []);
+        setData('nilai', []);
+        document.getElementById('cekAllSiswa').checked = false;
+        renderSiswa();
     }
 
     function openModalSiswa(id) {
@@ -1516,6 +1557,13 @@
         
         setData('absensi', absensi);
         alert('Data absensi berhasil disimpan!');
+    }
+
+    function hapusSemuaAbsensi() {
+        if (!confirm('Yakin hapus SEMUA data absensi?')) return;
+        setData('absensi', []);
+        alert('Semua data absensi berhasil dihapus!');
+        renderAbsensi();
     }
 
     function populateSiswaSelect() {
@@ -1785,6 +1833,13 @@
 
         setData('nilai', data);
         alert('Data nilai berhasil disimpan!');
+        renderNilaiInline();
+    }
+
+    function hapusSemuaNilai() {
+        if (!confirm('Yakin hapus SEMUA data nilai?')) return;
+        setData('nilai', []);
+        alert('Semua data nilai berhasil dihapus!');
         renderNilaiInline();
     }
 
@@ -2219,6 +2274,12 @@
         renderKalender();
     }
 
+    function hapusSemuaLibur() {
+        if (!confirm('Yakin hapus SEMUA data libur sekolah?')) return;
+        setData('libur', []);
+        renderKalender();
+    }
+
     function renderKalender() {
         const bulan = parseInt(document.getElementById('filterBulanKalender').value);
         const tahun = parseInt(document.getElementById('filterTahunKalender').value);
@@ -2594,7 +2655,7 @@
         const tahun = now.getFullYear();
         
         let csv = [];
-        csv.push('"SD NEGERI 1 SLOPURO"');
+        csv.push('"SD NEGERI 1 SELOPURO"');
         csv.push('"' + (filename || 'Export') + ' ' + bulanStr + '"');
         csv.push('');
         
