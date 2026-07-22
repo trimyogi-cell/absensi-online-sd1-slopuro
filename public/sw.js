@@ -1,4 +1,4 @@
-const CACHE_NAME = 'absensi-sd1-v5';
+const CACHE_NAME = 'absensi-sd1-v6';
 
 self.addEventListener('install', () => { self.skipWaiting(); });
 
