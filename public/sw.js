@@ -1,4 +1,4 @@
-const CACHE_NAME = 'absensi-sd1-v4';
+const CACHE_NAME = 'absensi-sd1-v5';
 
 self.addEventListener('install', () => { self.skipWaiting(); });
 
@@ -10,11 +10,6 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url);
-  if (url.pathname.startsWith('/api/')) {
-    event.respondWith(fetch(event.request));
-    return;
-  }
   event.respondWith(
     fetch(event.request).catch(() => caches.match(event.request))
   );

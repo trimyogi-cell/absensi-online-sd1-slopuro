@@ -997,8 +997,44 @@
 </div>
 
 <script>
-    // ===== ONLINE DATA LAYER =====
+    // ===== SUPABASE DIRECT CONNECTION =====
+    const _SB_URL = 'https://bploaeidnrrtmfqyrlrl.supabase.co';
+    const _SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwbG9hZWlkbnJydG1mcXlybHJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2OTU2NDUsImV4cCI6MjEwMDI3MTY0NX0.FKBcSAySNbNQjMKHxzHbi0tf2TZgoDa2-ejbj4Ug9qY';
     const _memStore = {};
+
+    async function _sbGet(name) {
+      const res = await fetch(_SB_URL + '/rest/v1/data_store?key=eq.' + encodeURIComponent(name) + '&select=value', {
+        headers: { 'apikey': _SB_KEY, 'Authorization': 'Bearer ' + _SB_KEY },
+        cache: 'no-store'
+      });
+      if (!res.ok) throw new Error('SB GET fail: ' + res.status);
+      const rows = await res.json();
+      return (rows && rows.length > 0) ? (rows[0].value || []) : [];
+    }
+
+    async function _sbSet(name, data) {
+      const clean = JSON.parse(JSON.stringify(data));
+      const check = await fetch(_SB_URL + '/rest/v1/data_store?key=eq.' + encodeURIComponent(name) + '&select=key', {
+        headers: { 'apikey': _SB_KEY, 'Authorization': 'Bearer ' + _SB_KEY },
+        cache: 'no-store'
+      });
+      const existing = await check.json();
+      if (existing && existing.length > 0) {
+        await fetch(_SB_URL + '/rest/v1/data_store?key=eq.' + encodeURIComponent(name), {
+          method: 'PATCH',
+          headers: { 'apikey': _SB_KEY, 'Authorization': 'Bearer ' + _SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+          body: JSON.stringify({ value: clean, updated_at: new Date().toISOString() }),
+          cache: 'no-store'
+        });
+      } else {
+        await fetch(_SB_URL + '/rest/v1/data_store', {
+          method: 'POST',
+          headers: { 'apikey': _SB_KEY, 'Authorization': 'Bearer ' + _SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+          body: JSON.stringify({ key: name, value: clean, updated_at: new Date().toISOString() }),
+          cache: 'no-store'
+        });
+      }
+    }
 
     function setSyncStatus(status) {
       const dot = document.getElementById('syncDot');
@@ -1012,12 +1048,9 @@
 
     async function _loadFromServer() {
       const tables = ['siswa','absensi','nilai','libur','gradeSetting','pengaturanSekolah','authUser'];
-      const ts = Date.now();
       try {
         setSyncStatus('syncing');
-        const results = await Promise.all(tables.map(t => 
-          fetch('/api/' + t + '?_=' + ts, { cache: 'no-store' }).then(r => r.json()).catch(() => [])
-        ));
+        const results = await Promise.all(tables.map(t => _sbGet(t).catch(() => [])));
         tables.forEach((t, i) => { _memStore[t] = JSON.stringify(results[i]); });
         setSyncStatus('online');
       } catch(e) {
@@ -1033,14 +1066,8 @@
         try {
           setSyncStatus('syncing');
           const data = JSON.parse(_memStore[key] || '[]');
-          const res = await fetch('/api/' + key + '/replace-all', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data),
-            cache: 'no-store'
-          });
-          if (res.ok) setSyncStatus('online');
-          else setSyncStatus('error');
+          await _sbSet(key, data);
+          setSyncStatus('online');
         } catch(e) {
           console.error('Sync gagal untuk', key, e);
           setSyncStatus('error');
@@ -2463,12 +2490,9 @@
         const user = document.getElementById('loginUser').value.trim();
         const pass = document.getElementById('loginPass').value;
         try {
-            const res = await fetch('/api/auth/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user, pass })
-            });
-            if (res.ok) {
+            const auth = await _sbGet('authUser');
+            const saved = auth.length > 0 ? auth[0] : { user: 'admin', pass: 'admin123' };
+            if (user === saved.user && pass === saved.pass) {
                 sessionStorage.setItem('loggedIn', '1');
                 document.getElementById('loginOverlay').style.display = 'none';
             } else {
@@ -2497,7 +2521,7 @@
         document.getElementById('setNipWali').value = s.nipWali || '';
         document.getElementById('setKelasWali').value = s.kelasWali || '3';
         try {
-            const auth = await fetch('/api/authUser').then(r => r.json());
+            const auth = await _sbGet('authUser');
             const cred = auth.length > 0 ? auth[0] : { user: 'admin', pass: 'admin123' };
             document.getElementById('setUsername').value = cred.user || '';
             document.getElementById('setPassword').value = cred.pass || '';
@@ -2519,19 +2543,12 @@
         if (!user || !pass) { alert('Username dan Password harus diisi!'); return; }
         localStorage.setItem('pengaturanSekolah', JSON.stringify(s));
         try {
-            const existing = await fetch('/api/authUser').then(r => r.json());
-            if (existing.length > 0) {
-                await fetch('/api/authUser/' + existing[0].id, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user, pass })
-                });
+            const authData = await _sbGet('authUser');
+            const authArr = Array.isArray(authData) ? authData : [];
+            if (authArr.length > 0) {
+                await _sbSet('authUser', [{ ...authArr[0], user, pass }]);
             } else {
-                await fetch('/api/authUser', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user, pass })
-                });
+                await _sbSet('authUser', [{ user, pass }]);
             }
         } catch(e) { console.error('Gagal simpan auth:', e); }
         alert('Pengaturan berhasil disimpan! Login baru berlaku setelah logout.');
