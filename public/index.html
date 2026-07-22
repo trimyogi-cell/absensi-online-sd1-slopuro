@@ -1311,19 +1311,20 @@
     // ===== CRUD SISWA =====
     function renderSiswa() {
         const data = getData('siswa');
-        const search = document.getElementById('searchSiswa')?.value?.toLowerCase() || '';
+        const search = (document.getElementById('searchSiswa')?.value || '').toLowerCase();
         const filtered = data.filter(s => 
-            s.nama.toLowerCase().includes(search) || 
-            s.nisn.includes(search) || 
-            s.kelas.includes(search)
+            (s.nama || '').toLowerCase().includes(search) || 
+            (s.nisn || '').includes(search) || 
+            (s.kelas || '').includes(search)
         );
+        filtered.sort((a, b) => (a.nama || '').localeCompare(b.nama || '', 'id'));
         const tbody = document.getElementById('tabelSiswa');
         if (filtered.length === 0) {
             tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:#999;padding:30px;">Tidak ada data siswa</td></tr>';
         } else {
             tbody.innerHTML = filtered.map((s, i) => `
                 <tr>
-                    <td><input type="checkbox" class="cek-siswa" data-id="${s.id}"></td>
+                    <td><input type="checkbox" class="cek-siswa" data-nisn="${s.nisn}"></td>
                     <td>${i + 1}</td>
                     <td>${s.nisn}</td>
                     <td>${s.nama}</td>
@@ -1334,8 +1335,8 @@
                     <td>${s.alamat}</td>
                     <td>${s.noHP}</td>
                     <td>
-                        <button class="btn btn-warning btn-sm" onclick="editSiswa('${s.id}')">✏️</button>
-                        <button class="btn btn-danger btn-sm" onclick="hapusSiswa('${s.id}')">🗑️</button>
+                        <button class="btn btn-warning btn-sm" onclick="editSiswa('${s.nisn}')">✏️</button>
+                        <button class="btn btn-danger btn-sm" onclick="hapusSiswaByNisn('${s.nisn}')">🗑️</button>
                     </td>
                 </tr>
             `).join('');
@@ -1348,21 +1349,23 @@
     }
 
     function hapusDitandaiSiswa() {
-        const ids = [...document.querySelectorAll('.cek-siswa:checked')].map(cb => cb.dataset.id);
-        if (ids.length === 0) { alert('Pilih siswa yang ingin dihapus terlebih dahulu!'); return; }
-        if (!confirm('Yakin hapus ' + ids.length + ' siswa yang dipilih? Data absensi dan nilai terkait juga akan terhapus.')) return;
-        let data = getData('siswa');
-        const removed = data.filter(s => ids.includes(s.id));
-        data = data.filter(s => !ids.includes(s.id));
-        setData('siswa', data);
-        removed.forEach(s => {
-            let absensi = getData('absensi').filter(a => a.nisn !== s.nisn);
-            setData('absensi', absensi);
-            let nilai = getData('nilai').filter(n => n.nisn !== s.nisn);
-            setData('nilai', nilai);
-        });
-        document.getElementById('cekAllSiswa').checked = false;
-        renderSiswa();
+        const nisns = [...document.querySelectorAll('.cek-siswa:checked')].map(cb => cb.dataset.nisn);
+        if (nisns.length === 0) { alert('Pilih siswa yang ingin dihapus terlebih dahulu!'); return; }
+        if (!confirm('Yakin hapus ' + nisns.length + ' siswa yang dipilih? Data absensi dan nilai terkait juga akan terhapus.')) return;
+        try {
+            let data = getData('siswa');
+            const removed = data.filter(s => nisns.includes(s.nisn));
+            data = data.filter(s => !nisns.includes(s.nisn));
+            setData('siswa', data);
+            removed.forEach(s => {
+                let absensi = getData('absensi').filter(a => a.nisn !== s.nisn);
+                setData('absensi', absensi);
+                let nilai = getData('nilai').filter(n => n.nisn !== s.nisn);
+                setData('nilai', nilai);
+            });
+            document.getElementById('cekAllSiswa').checked = false;
+            renderSiswa();
+        } catch(e) { alert('Error menghapus siswa: ' + e.message); console.error(e); }
     }
 
     function hapusSemuaSiswa() {
@@ -1374,6 +1377,20 @@
         setData('nilai', []);
         document.getElementById('cekAllSiswa').checked = false;
         renderSiswa();
+    }
+
+    function hapusSiswaByNisn(nisn) {
+        if (!confirm('Yakin hapus siswa ini? Data absensi dan nilai terkait juga akan terhapus.')) return;
+        try {
+            let data = getData('siswa');
+            data = data.filter(s => s.nisn !== nisn);
+            setData('siswa', data);
+            let absensi = getData('absensi').filter(a => a.nisn !== nisn);
+            setData('absensi', absensi);
+            let nilai = getData('nilai').filter(n => n.nisn !== nisn);
+            setData('nilai', nilai);
+            renderSiswa();
+        } catch(e) { alert('Error menghapus siswa: ' + e.message); console.error(e); }
     }
 
     function openModalSiswa(id) {
@@ -1390,11 +1407,11 @@
         openModal('modalSiswa');
     }
 
-    function editSiswa(id) {
-        const s = getData('siswa').find(x => x.id === id);
+    function editSiswa(nisn) {
+        const s = getData('siswa').find(x => x.nisn === nisn);
         if (!s) return;
         document.getElementById('modalSiswaTitle').textContent = 'Edit Siswa';
-        document.getElementById('editIdSiswa').value = s.id;
+        document.getElementById('editIdSiswa').value = s.nisn;
         document.getElementById('inputNISN').value = s.nisn;
         document.getElementById('inputNamaSiswa').value = s.nama;
         document.getElementById('inputJK').value = s.jk;
@@ -1422,12 +1439,12 @@
         }
         
         let data = getData('siswa');
-        const editId = document.getElementById('editIdSiswa').value;
+        const editNisn = document.getElementById('editIdSiswa').value;
         
-        if (editId) {
-            const idx = data.findIndex(s => s.id === editId);
+        if (editNisn) {
+            const idx = data.findIndex(s => s.nisn === editNisn);
             if (idx !== -1) {
-                data[idx] = { ...data[idx], nisn, nama, jk, kelas, tempatLahir, tglLahir, alamat, noHP };
+                data[idx] = { id: data[idx].id, nisn, nama, jk, kelas, tempatLahir, tglLahir, alamat, noHP };
             }
         } else {
             if (data.some(s => s.nisn === nisn)) {
@@ -1439,23 +1456,6 @@
         
         setData('siswa', data);
         closeModal('modalSiswa');
-        renderSiswa();
-    }
-
-    function hapusSiswa(id) {
-        if (!confirm('Yakin ingin menghapus siswa ini? Data absensi dan nilai terkait juga akan terhapus.')) return;
-        let data = getData('siswa');
-        const siswa = data.find(s => s.id === id);
-        data = data.filter(s => s.id !== id);
-        setData('siswa', data);
-        
-        // Hapus data absensi terkait
-        if (siswa) {
-            let absensi = getData('absensi').filter(a => a.nisn !== siswa.nisn);
-            setData('absensi', absensi);
-            let nilai = getData('nilai').filter(n => n.nisn !== siswa.nisn);
-            setData('nilai', nilai);
-        }
         renderSiswa();
     }
 
