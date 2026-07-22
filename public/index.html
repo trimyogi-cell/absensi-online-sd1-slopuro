@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aplikasi Absensi Siswa - SD N 1 Slopuro</title>
+    <title>ABSENSI SD N 1 SELOPURO</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1a73e8">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Absensi SD1">
+    <meta name="apple-mobile-web-app-title" content="ABSENSI SD N 1 SELOPURO">
     <link rel="apple-touch-icon" href="icon-192.svg">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -210,23 +210,33 @@
             .sidebar { display: none; position: fixed; left: 0; top: 60px; bottom: 0; z-index: 100; width: 240px; }
             .sidebar.show { display: block; }
             #mobileMenuBtn { display: block !important; }
+            .container { flex-direction: column; }
+            .main-content { width: 100%; padding: 15px; }
+            .header { padding: 10px 15px; flex-wrap: wrap; gap: 8px; }
+            .header h1 { font-size: 1em; }
+            .header .subtitle { font-size: 0.75em; }
             .stats-row { grid-template-columns: repeat(2, 1fr); }
             .form-row { grid-template-columns: 1fr; }
             .search-box input { width: 180px; }
             .uh-item input { width: 70px; }
             .header .date-display { display: none; }
             #btnSyncNow span { display: none; }
+            .page { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+            .card { padding: 15px !important; }
         }
     </style>
 </head>
 <body>
+
+<!-- SIDEBAR OVERLAY (mobile) -->
+<div id="sidebarOverlay" style="display:none;position:fixed;top:60px;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:99;" onclick="toggleMobileMenu()"></div>
 
 <!-- LOADING OVERLAY -->
 <div id="loadingOverlay" style="display:flex;position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#1a73e8,#0d47a1);z-index:10000;align-items:center;justify-content:center;">
     <div style="text-align:center;color:white;">
         <div style="font-size:3em;margin-bottom:12px;">📚</div>
         <h2>Memuat Data...</h2>
-        <p style="opacity:0.8;margin-top:8px;">SD Negeri 1 Slopuro</p>
+        <p style="opacity:0.8;margin-top:8px;">SD Negeri 1 Selopuro</p>
     </div>
 </div>
 
@@ -252,10 +262,10 @@
 
 <div class="header">
     <div style="display:flex;align-items:center;gap:10px;">
-        <button id="mobileMenuBtn" style="display:none;background:none;border:none;color:white;font-size:1.5em;cursor:pointer;" onclick="document.querySelector('.sidebar').classList.toggle('show')">☰</button>
+        <button id="mobileMenuBtn" style="display:none;background:none;border:none;color:white;font-size:1.5em;cursor:pointer;" onclick="toggleMobileMenu()">☰</button>
         <div>
-            <h1>📚 Aplikasi Absensi Siswa</h1>
-            <div class="subtitle">SD Negeri 1 Slopuro</div>
+            <h1>📚 ABSENSI SD N 1 SELOPURO</h1>
+            <div class="subtitle">SD Negeri 1 Selopuro</div>
         </div>
     </div>
     <div style="display:flex;align-items:center;gap:15px;">
@@ -1144,12 +1154,25 @@
     }
 
     // ===== NAVIGATION =====
+    function toggleMobileMenu() {
+        var sidebar = document.querySelector('.sidebar');
+        var overlay = document.getElementById('sidebarOverlay');
+        var show = !sidebar.classList.contains('show');
+        sidebar.classList.toggle('show');
+        overlay.style.display = show ? 'block' : 'none';
+    }
+
     function showPage(page, el) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
         document.getElementById('page-' + page).classList.add('active');
         if (el) el.classList.add('active');
         refreshPage(page);
+        if (window.innerWidth <= 768) {
+            document.querySelector('.sidebar').classList.remove('show');
+            var overlay = document.getElementById('sidebarOverlay');
+            if (overlay) overlay.style.display = 'none';
+        }
     }
 
     function refreshPage(page) {
