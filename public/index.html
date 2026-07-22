@@ -1336,7 +1336,6 @@
                     <td>${s.noHP}</td>
                     <td>
                         <button class="btn btn-warning btn-sm" onclick="editSiswa('${s.nisn}')">✏️</button>
-                        <button class="btn btn-danger btn-sm" onclick="hapusSiswaByNisn('${s.nisn}')">🗑️</button>
                     </td>
                 </tr>
             `).join('');
@@ -1468,6 +1467,7 @@
         
         let filteredSiswa = siswa;
         if (kelas) filteredSiswa = siswa.filter(s => s.kelas === kelas);
+        filteredSiswa.sort((a, b) => (a.nama || '').localeCompare(b.nama || '', 'id'));
         
         const tbody = document.getElementById('tabelAbsensi');
         if (filteredSiswa.length === 0) {
@@ -1729,6 +1729,7 @@
 
         let filteredSiswa = siswa;
         if (kelas) filteredSiswa = siswa.filter(s => s.kelas === kelas);
+        filteredSiswa.sort((a, b) => (a.nama || '').localeCompare(b.nama || '', 'id'));
 
         const tbody = document.getElementById('tabelNilai');
         if (!mapel || !semester) {
