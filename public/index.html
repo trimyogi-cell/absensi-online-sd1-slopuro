@@ -1085,21 +1085,11 @@
       if (btn) btn.disabled = false;
     }
 
-    window.localStorage = {
-      getItem: function(key) { return _memStore[key] || null; },
-      setItem: function(key, val) {
-        _memStore[key] = String(val);
-        if (key !== 'loggedIn' && key !== 'authUser') _syncToServer(key);
-      },
-      removeItem: function(key) { delete _memStore[key]; },
-      clear: function() { Object.keys(_memStore).forEach(k => delete _memStore[k]); },
-      get length() { return Object.keys(_memStore).length; },
-      key: function(i) { return Object.keys(_memStore)[i] || null; }
-    };
-
-    // ===== DATA MANAGEMENT =====
-    function getData(key) { return JSON.parse(localStorage.getItem(key) || '[]'); }
-    function setData(key, data) { localStorage.setItem(key, JSON.stringify(data)); }
+    function getData(key) { return JSON.parse(_memStore[key] || '[]'); }
+    function setData(key, data) {
+      _memStore[key] = JSON.stringify(data);
+      if (key !== 'loggedIn' && key !== 'authUser') _syncToServer(key);
+    }
     function generateId() { return Date.now().toString(36) + Math.random().toString(36).substr(2, 5); }
     function getTodayStr() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
     
@@ -1579,7 +1569,7 @@
 
     function loadKKM() {
         const key = getKKMKey();
-        const val = localStorage.getItem(key);
+        const val = _memStore[key] || null;
         const input = document.getElementById('inputKKM');
         const info = document.getElementById('kkmInfo');
         if (input) {
@@ -1596,7 +1586,8 @@
             return;
         }
         const key = getKKMKey();
-        localStorage.setItem(key, val);
+        _memStore[key] = String(val);
+        _syncToServer(key);
         document.getElementById('kkmInfo').textContent = `KKM aktif: ${val}`;
         document.getElementById('kkmInfo').style.color = '#0f9d58';
         renderNilaiInline();
@@ -1604,7 +1595,7 @@
 
     function getKKM() {
         const key = getKKMKey();
-        return parseInt(localStorage.getItem(key)) || 0;
+        return parseInt(_memStore[key]) || 0;
     }
 
     function updateKKMSummary() {
@@ -1999,7 +1990,7 @@
                 const g = getGrade(avg);
                 const uh = n.uh || [];
                 const kkmKey = `kkm_${n.mapel}_${n.semester}`;
-                const kkmVal = parseInt(localStorage.getItem(kkmKey)) || 0;
+                const kkmVal = parseInt(_memStore[kkmKey]) || 0;
                 const isBelowKKM = kkmVal > 0 && avg < kkmVal;
                 const rowBg = isBelowKKM ? 'background:#fff0f0;' : '';
                 let uhCells = '';
@@ -2081,7 +2072,7 @@
                         const avgMapel = avgs.reduce((a, b) => a + b, 0) / avgs.length;
                         avgList.push(avgMapel);
                         const kkmKey = `kkm_${mp}_${sem}`;
-                        const kkmVal = parseInt(localStorage.getItem(kkmKey)) || 0;
+                        const kkmVal = parseInt(_memStore[kkmKey]) || 0;
                         const isBelowKKM = kkmVal > 0 && avgMapel < kkmVal;
                         cells += `<td style="text-align:center;font-size:0.85em;font-weight:bold;${isBelowKKM ? 'color:#c62828;background:#fff0f0;' : ''}">${avgMapel.toFixed(1)}${isBelowKKM ? ' ⚠️' : ''}</td>`;
                     } else {
@@ -2517,7 +2508,7 @@
 
     // ===== PENGATURAN =====
     async function loadPengaturan() {
-        const s = JSON.parse(localStorage.getItem('pengaturanSekolah') || '{}');
+        const s = JSON.parse(_memStore['pengaturanSekolah'] || '{}');
         document.getElementById('setKepsek').value = s.kepsek || '';
         document.getElementById('setNipKepsek').value = s.nipKepsek || '';
         document.getElementById('setWaliKelas').value = s.waliKelas || '';
@@ -2544,7 +2535,8 @@
         const user = document.getElementById('setUsername').value.trim();
         const pass = document.getElementById('setPassword').value;
         if (!user || !pass) { alert('Username dan Password harus diisi!'); return; }
-        localStorage.setItem('pengaturanSekolah', JSON.stringify(s));
+        _memStore['pengaturanSekolah'] = JSON.stringify(s);
+        _syncToServer('pengaturanSekolah');
         try {
             const authData = await _sbGet('authUser');
             const authArr = Array.isArray(authData) ? authData : [];
@@ -2557,7 +2549,7 @@
         alert('Pengaturan berhasil disimpan! Login baru berlaku setelah logout.');
     }
     function getPengaturan() {
-        return JSON.parse(localStorage.getItem('pengaturanSekolah') || '{}');
+        return JSON.parse(_memStore['pengaturanSekolah'] || '{}');
     }
 
     // ===== EXPORT EXCEL (CSV) =====
@@ -2565,7 +2557,7 @@
         const table = document.getElementById(tableId);
         if (!table) { alert('Tabel tidak ditemukan!'); return; }
         
-        const pengaturanSekolah = JSON.parse(localStorage.getItem('pengaturanSekolah') || '{}');
+        const pengaturanSekolah = JSON.parse(_memStore['pengaturanSekolah'] || '{}');
         const kepsek = pengaturanSekolah.kepsek || '.........................';
         const nipKepsek = pengaturanSekolah.nipKepsek || '.........................';
         const waliKelas = pengaturanSekolah.waliKelas || '.........................';
@@ -2784,7 +2776,7 @@
         if (printAbsDate) printAbsDate.textContent = now;
         const printNilaiDate = document.getElementById('printRekapNilaiDate');
         if (printNilaiDate) printNilaiDate.textContent = now;
-        const pengaturanSekolah = JSON.parse(localStorage.getItem('pengaturanSekolah') || '{}');
+        const pengaturanSekolah = JSON.parse(_memStore['pengaturanSekolah'] || '{}');
         document.querySelectorAll('#printKepsek').forEach(el => el.textContent = pengaturanSekolah.kepsek || '.........................');
         document.querySelectorAll('#printNipKepsek').forEach(el => el.textContent = 'NIP. ' + (pengaturanSekolah.nipKepsek || '.........................'));
         document.querySelectorAll('#printWaliKelas').forEach(el => el.textContent = pengaturanSekolah.waliKelas || '.........................');
