@@ -5,8 +5,8 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
-const SUPABASE_URL = process.env.SUPABASE_URL || '';
-const SUPABASE_KEY = process.env.SUPABASE_KEY || '';
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://bploaeidnrrtmfqyrlrl.supabase.co';
+const SUPABASE_KEY = process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwbG9hZWlkbnJydG1mcXlybHJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2OTU2NDUsImV4cCI6MjEwMDI3MTY0NX0.FKBcSAySNbNQjMKHxzHbi0tf2TZgoDa2-ejbj4Ug9qY';
 
 async function supabaseRequest(method, path, body) {
   const url = `${SUPABASE_URL}/rest/v1/${path}`;
