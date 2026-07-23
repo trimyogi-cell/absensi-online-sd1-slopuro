@@ -2326,9 +2326,10 @@
         if (ids.length === 0) { alert('Pilih jadwal yang ingin dihapus terlebih dahulu!'); return; }
         if (!confirm('Yakin hapus ' + ids.length + ' jadwal yang dipilih?')) return;
         let data = getData('jadwalPelajaran').filter(j => !ids.includes(j.id));
-        setData('jadwalPelajaran', data);
+        _memStore['jadwalPelajaran'] = JSON.stringify(data);
+        _syncToServer('jadwalPelajaran');
         document.getElementById('cekAllJadwal').checked = false;
-        renderJadwal();
+        setTimeout(function() { renderJadwal(); }, 100);
     }
 
     function openModalJadwal() {
@@ -2378,9 +2379,10 @@
             data.push({ id: generateId(), hari, kelas, jamke, mapel, guru, jam });
         }
 
-        setData('jadwalPelajaran', data);
+        _memStore['jadwalPelajaran'] = JSON.stringify(data);
+        _syncToServer('jadwalPelajaran');
         closeModal('modalJadwal');
-        renderJadwal();
+        setTimeout(function() { renderJadwal(); }, 100);
     }
 
     function hapusJadwal(id) {
@@ -2395,8 +2397,9 @@
         const kelas = document.getElementById('filterKelasJadwal').value;
         if (!confirm('Yakin hapus SEMUA jadwal hari ' + hari + ' Kelas ' + kelas + '?')) return;
         let data = getData('jadwalPelajaran').filter(j => !(j.hari === hari && j.kelas === kelas));
-        setData('jadwalPelajaran', data);
-        renderJadwal();
+        _memStore['jadwalPelajaran'] = JSON.stringify(data);
+        _syncToServer('jadwalPelajaran');
+        setTimeout(function() { renderJadwal(); }, 100);
     }
 
     // ===== KALENDER LIBUR =====
