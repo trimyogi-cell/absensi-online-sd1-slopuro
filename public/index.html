@@ -1262,6 +1262,14 @@
         switch(page) {
             case 'dashboard': renderDashboard(); break;
             case 'siswa': renderSiswa(); break;
+            case 'jadwal':
+                var hariList = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+                var hariIni = hariList[new Date().getDay()];
+                if (hariIni !== 'Minggu') {
+                    document.getElementById('filterHariJadwal').value = hariIni;
+                }
+                renderJadwal();
+                break;
             case 'absensi': 
                 if (!document.getElementById('filterTglAbsensi').value) {
                     document.getElementById('filterTglAbsensi').value = getTodayStr();
