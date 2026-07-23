@@ -289,6 +289,9 @@
         <div class="menu-item" onclick="showPage('siswa', this)">
             <span class="icon">👨‍🎓</span> Data Siswa
         </div>
+        <div class="menu-item" onclick="showPage('inputSiswa', this)">
+            <span class="icon">📝</span> Input Data Siswa
+        </div>
         <div class="menu-section">Input Data</div>
         <div class="menu-item" onclick="showPage('absensi', this)">
             <span class="icon">📋</span> Absensi
@@ -406,8 +409,31 @@
                         <div class="search-box">
                             <input type="text" id="searchSiswa" placeholder="Cari siswa..." oninput="renderSiswa()">
                         </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div style="overflow-x:auto;">
+                    <table>
+                        <thead>
+                            <tr><th style="width:40px;text-align:center;">No</th><th>NISN</th><th>Nama Lengkap</th><th>Jenis Kelamin</th><th>Kelas</th><th>Tempat Lahir</th><th>Tanggal Lahir</th><th>Alamat</th><th>No. Ortu</th></tr>
+                        </thead>
+                        <tbody id="tabelSiswa"></tbody>
+                    </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Data Siswa (CRUD) -->
+        <div class="page" id="page-inputSiswa">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Input Data Siswa</h2>
+                    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                        <div class="search-box">
+                            <input type="text" id="searchInputSiswa" placeholder="Cari siswa..." oninput="renderInputSiswa()">
+                        </div>
                         <button class="btn btn-primary" onclick="openModalSiswa()">+ Tambah</button>
-                        <button class="btn btn-success" onclick="renderSiswa()">💾 Simpan</button>
                         <button class="btn btn-warning" onclick="hapusDitandaiSiswa()">🗑️ Hapus Ditandai</button>
                         <button class="btn btn-danger" onclick="hapusSemuaSiswa()">🗑️ Hapus Semua</button>
                     </div>
@@ -418,7 +444,7 @@
                         <thead>
                             <tr><th><input type="checkbox" id="cekAllSiswa" onchange="toggleAllSiswa()"></th><th>No</th><th>NISN</th><th>Nama Lengkap</th><th>Jenis Kelamin</th><th>Kelas</th><th>Tempat Lahir</th><th>Tanggal Lahir</th><th>Alamat</th><th>No. Ortu</th><th>Aksi</th></tr>
                         </thead>
-                        <tbody id="tabelSiswa"></tbody>
+                        <tbody id="tabelInputSiswa"></tbody>
                     </table>
                     </div>
                 </div>
@@ -1295,6 +1321,7 @@
         switch(page) {
             case 'dashboard': renderDashboard(); break;
             case 'siswa': renderSiswa(); break;
+            case 'inputSiswa': renderInputSiswa(); break;
             case 'aturJadwal':
                 var hariList2 = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
                 var hariIni2 = hariList2[new Date().getDay()];
@@ -1444,7 +1471,36 @@
         filtered.sort((a, b) => (a.nama || '').localeCompare(b.nama || '', 'id'));
         const tbody = document.getElementById('tabelSiswa');
         if (filtered.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:#999;padding:30px;">Tidak ada data siswa</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:#999;padding:30px;">Tidak ada data siswa</td></tr>';
+        } else {
+            tbody.innerHTML = filtered.map((s, i) => `
+                <tr>
+                    <td style="text-align:center;">${i + 1}</td>
+                    <td>${s.nisn}</td>
+                    <td>${s.nama}</td>
+                    <td>${s.jk}</td>
+                    <td>${s.kelas}</td>
+                    <td>${s.tempatLahir}</td>
+                    <td>${s.tglLahir}</td>
+                    <td>${s.alamat}</td>
+                    <td>${s.noHP}</td>
+                </tr>
+            `).join('');
+        }
+    }
+
+    function renderInputSiswa() {
+        const data = getData('siswa');
+        const search = (document.getElementById('searchInputSiswa')?.value || '').toLowerCase();
+        const filtered = data.filter(s => 
+            (s.nama || '').toLowerCase().includes(search) || 
+            (s.nisn || '').includes(search) || 
+            (s.kelas || '').includes(search)
+        );
+        filtered.sort((a, b) => (a.nama || '').localeCompare(b.nama || '', 'id'));
+        const tbody = document.getElementById('tabelInputSiswa');
+        if (filtered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;color:#999;padding:30px;">Tidak ada data siswa</td></tr>';
         } else {
             tbody.innerHTML = filtered.map((s, i) => `
                 <tr>
@@ -1487,7 +1543,7 @@
                 setData('nilai', nilai);
             });
             document.getElementById('cekAllSiswa').checked = false;
-            renderSiswa();
+            renderInputSiswa();
         } catch(e) { alert('Error menghapus siswa: ' + e.message); console.error(e); }
     }
 
@@ -1499,7 +1555,7 @@
         setData('absensi', []);
         setData('nilai', []);
         document.getElementById('cekAllSiswa').checked = false;
-        renderSiswa();
+        renderInputSiswa();
     }
 
     function hapusSiswaByNisn(nisn) {
