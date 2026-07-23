@@ -2098,9 +2098,7 @@
         }
         
         const thead = document.getElementById('headerRekapAbsensi');
-        const monthYearLabel = bulanNama[bulan-1] + ' ' + tahun;
-        let headerHtml = `<tr><th colspan="${4 + hariKerja.length}" style="text-align:center;font-size:1em;background:#e3f2fd;font-weight:700;">📅 ${monthYearLabel}</th><th colspan="6"></th></tr>`;
-        headerHtml += '<tr><th class="sticky-col-th" style="text-align:center;">No</th><th class="sticky-col-th" style="text-align:center;">NISN</th><th class="sticky-col-th" style="text-align:center;">Nama Siswa</th><th class="sticky-col-th" style="text-align:center;">Kelas</th>';
+        let headerHtml = '<th class="sticky-col-th" style="text-align:center;">No</th><th class="sticky-col-th" style="text-align:center;">NISN</th><th class="sticky-col-th" style="text-align:center;">Nama Siswa</th><th class="sticky-col-th" style="text-align:center;">Kelas</th>';
         hariKerja.forEach(w => {
             let bgColor = '', fgColor = '#1a73e8';
             const sundayClass = w.dow === 0 ? ' col-minggu' : '';
@@ -2108,7 +2106,7 @@
             headerHtml += `<th class="col-day${sundayClass}" style="min-width:28px;max-width:32px;text-align:center;font-size:0.75em;background:${bgColor};"><span style="color:${fgColor};font-weight:700;font-size:0.9em;">${w.d}</span><br><span style="font-size:0.75em;color:#666;">${hariSingkat[w.dow]}</span></th>`;
         });
         headerHtml += '<th style="text-align:center;">H</th><th style="text-align:center;">S</th><th style="text-align:center;">I</th><th style="text-align:center;">A</th><th style="text-align:center;">L</th><th style="text-align:center;">Hadir</th>';
-        thead.innerHTML = headerHtml;
+        thead.innerHTML = `<tr>${headerHtml}</tr>`;
         
         const tbody = document.getElementById('tabelRekapAbsensi');
         if (filteredSiswa.length === 0) {
