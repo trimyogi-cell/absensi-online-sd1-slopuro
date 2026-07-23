@@ -2024,7 +2024,7 @@
         const thead = document.getElementById('headerRekapAbsensi');
         let headerHtml = '<th class="sticky-col-th" style="text-align:center;">No</th><th class="sticky-col-th" style="text-align:center;">NISN</th><th class="sticky-col-th" style="text-align:center;">Nama Siswa</th><th class="sticky-col-th" style="text-align:center;">Kelas</th>';
         bulanList.forEach(b => {
-            headerHtml += `<th colspan="5" style="text-align:center;font-size:0.8em;background:#e3f2fd;font-weight:700;">${bulanNama[b-1].substring(0,3)}</th>`;
+            headerHtml += `<th colspan="5" style="text-align:center;font-size:0.85em;background:#e3f2fd;font-weight:700;">${bulanNama[b-1]}</th>`;
         });
         headerHtml += '<th colspan="5" style="text-align:center;font-size:0.8em;background:#c8e6c9;font-weight:700;">TOTAL SEMESTER</th>';
         headerHtml += '<th style="text-align:center;font-size:0.8em;background:#fff9c4;font-weight:700;">Hadir</th>';
