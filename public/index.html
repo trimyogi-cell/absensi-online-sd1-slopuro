@@ -289,15 +289,15 @@
         <div class="menu-item" onclick="showPage('siswa', this)">
             <span class="icon">👨‍🎓</span> Data Siswa
         </div>
-        <div class="menu-item" onclick="showPage('inputSiswa', this)">
-            <span class="icon">📝</span> Input Data Siswa
-        </div>
         <div class="menu-section">Input Data</div>
         <div class="menu-item" onclick="showPage('absensi', this)">
             <span class="icon">📋</span> Absensi
         </div>
         <div class="menu-item" onclick="showPage('nilai', this)">
             <span class="icon">📝</span> Nilai Pelajaran
+        </div>
+        <div class="menu-item" onclick="showPage('inputSiswa', this)">
+            <span class="icon">📝</span> Input Data Siswa
         </div>
         <div class="menu-item" onclick="showPage('aturJadwal', this)">
             <span class="icon">🗓️</span> Atur Jadwal
@@ -409,6 +409,15 @@
                         <div class="search-box">
                             <input type="text" id="searchSiswa" placeholder="Cari siswa..." oninput="renderSiswa()">
                         </div>
+                        <select id="filterKelasSiswa" onchange="renderSiswa()">
+                            <option value="">Semua Kelas</option>
+                            <option value="1">Kelas 1</option>
+                            <option value="2">Kelas 2</option>
+                            <option value="3">Kelas 3</option>
+                            <option value="4">Kelas 4</option>
+                            <option value="5">Kelas 5</option>
+                            <option value="6">Kelas 6</option>
+                        </select>
                     </div>
                 </div>
                 <div class="card-body">
@@ -1463,11 +1472,12 @@
     function renderSiswa() {
         const data = getData('siswa');
         const search = (document.getElementById('searchSiswa')?.value || '').toLowerCase();
+        const kelasFilter = document.getElementById('filterKelasSiswa')?.value || '';
         const filtered = data.filter(s => 
             (s.nama || '').toLowerCase().includes(search) || 
             (s.nisn || '').includes(search) || 
             (s.kelas || '').includes(search)
-        );
+        ).filter(s => !kelasFilter || s.kelas === kelasFilter);
         filtered.sort((a, b) => (a.nama || '').localeCompare(b.nama || '', 'id'));
         const tbody = document.getElementById('tabelSiswa');
         if (filtered.length === 0) {
