@@ -299,6 +299,9 @@
         <div class="menu-item" onclick="showPage('nilai', this)">
             <span class="icon">📝</span> Nilai Pelajaran
         </div>
+        <div class="menu-item" onclick="showPage('aturJadwal', this)">
+            <span class="icon">🗓️</span> Atur Jadwal
+        </div>
         <div class="menu-section">Laporan</div>
         <div class="menu-item" onclick="showPage('rekapAbsensi', this)">
             <span class="icon">📊</span> Rekap Absensi
@@ -392,7 +395,7 @@
             </div>
         </div>
 
-        <!-- Jadwal Pelajaran -->
+        <!-- Jadwal Pelajaran (Read Only) -->
         <div class="page" id="page-jadwal">
             <div class="card">
                 <div class="card-header">
@@ -414,6 +417,43 @@
                             <option value="5">Kelas 5</option>
                             <option value="6">Kelas 6</option>
                         </select>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div style="overflow-x:auto;">
+                    <table>
+                        <thead>
+                            <tr><th style="width:60px;text-align:center;">Jam Ke-</th><th>Mata Pelajaran</th><th>Guru</th><th>Jam Pelajaran</th></tr>
+                        </thead>
+                        <tbody id="tabelJadwal"></tbody>
+                    </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Atur Jadwal (CRUD) -->
+        <div class="page" id="page-aturJadwal">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Atur Jadwal Pelajaran</h2>
+                    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                        <select id="filterHariAturJadwal" onchange="renderAturJadwal()">
+                            <option value="Senin">Senin</option>
+                            <option value="Selasa">Selasa</option>
+                            <option value="Rabu">Rabu</option>
+                            <option value="Kamis">Kamis</option>
+                            <option value="Jumat">Jumat</option>
+                            <option value="Sabtu">Sabtu</option>
+                        </select>
+                        <select id="filterKelasAturJadwal" onchange="renderAturJadwal()">
+                            <option value="1">Kelas 1</option>
+                            <option value="2">Kelas 2</option>
+                            <option value="3" selected>Kelas 3</option>
+                            <option value="4">Kelas 4</option>
+                            <option value="5">Kelas 5</option>
+                            <option value="6">Kelas 6</option>
+                        </select>
                         <button class="btn btn-primary" onclick="openModalJadwal()">+ Tambah Jam</button>
                         <button class="btn btn-warning" onclick="hapusDitandaiJadwal()">🗑️ Hapus Ditandai</button>
                         <button class="btn btn-danger" onclick="hapusSemuaJadwal()">🗑️ Hapus Semua</button>
@@ -425,7 +465,7 @@
                         <thead>
                             <tr><th><input type="checkbox" id="cekAllJadwal" onchange="toggleAllJadwal()"></th><th>Jam Ke-</th><th>Mata Pelajaran</th><th>Guru</th><th>Jam Pelajaran</th><th>Aksi</th></tr>
                         </thead>
-                        <tbody id="tabelJadwal"></tbody>
+                        <tbody id="tabelAturJadwal"></tbody>
                     </table>
                     </div>
                 </div>
@@ -1269,6 +1309,14 @@
                     document.getElementById('filterHariJadwal').value = hariIni;
                 }
                 renderJadwal();
+                break;
+            case 'aturJadwal':
+                var hariList2 = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+                var hariIni2 = hariList2[new Date().getDay()];
+                if (hariIni2 !== 'Minggu') {
+                    document.getElementById('filterHariAturJadwal').value = hariIni2;
+                }
+                renderAturJadwal();
                 break;
             case 'absensi': 
                 if (!document.getElementById('filterTglAbsensi').value) {
@@ -2307,7 +2355,29 @@
 
         const tbody = document.getElementById('tabelJadwal');
         if (filtered.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;padding:30px;">Belum ada jadwal untuk hari ini. Klik "+ Tambah Jam" untuk menambahkan.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#999;padding:30px;">Belum ada jadwal untuk hari ini</td></tr>';
+            return;
+        }
+        tbody.innerHTML = filtered.map(j => `
+            <tr>
+                <td style="text-align:center;font-weight:bold;">${j.jamke}</td>
+                <td>${j.mapel}</td>
+                <td>${j.guru}</td>
+                <td>${j.jam}</td>
+            </tr>
+        `).join('');
+    }
+
+    function renderAturJadwal() {
+        const hari = document.getElementById('filterHariAturJadwal').value;
+        const kelas = document.getElementById('filterKelasAturJadwal').value;
+        const data = getData('jadwalPelajaran');
+        const filtered = data.filter(j => j.hari === hari && j.kelas === kelas);
+        filtered.sort((a, b) => (a.jamke || 0) - (b.jamke || 0));
+
+        const tbody = document.getElementById('tabelAturJadwal');
+        if (filtered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;padding:30px;">Belum ada jadwal. Klik "+ Tambah Jam" untuk menambahkan.</td></tr>';
             return;
         }
         tbody.innerHTML = filtered.map(j => `
@@ -2337,7 +2407,7 @@
         _memStore['jadwalPelajaran'] = JSON.stringify(data);
         _syncToServer('jadwalPelajaran');
         document.getElementById('cekAllJadwal').checked = false;
-        setTimeout(function() { renderJadwal(); }, 100);
+        setTimeout(function() { renderAturJadwal(); }, 100);
     }
 
     function openModalJadwal() {
@@ -2363,8 +2433,8 @@
     }
 
     function simpanJadwal() {
-        const hari = document.getElementById('filterHariJadwal').value;
-        const kelas = document.getElementById('filterKelasJadwal').value;
+        const hari = document.getElementById('filterHariAturJadwal').value;
+        const kelas = document.getElementById('filterKelasAturJadwal').value;
         const jamke = parseInt(document.getElementById('inputJamKe').value);
         const mapel = document.getElementById('inputMapelJadwal').value.trim();
         const guru = document.getElementById('inputGuruJadwal').value.trim();
@@ -2390,24 +2460,27 @@
         _memStore['jadwalPelajaran'] = JSON.stringify(data);
         _syncToServer('jadwalPelajaran');
         closeModal('modalJadwal');
-        setTimeout(function() { renderJadwal(); }, 100);
+        setTimeout(function() { renderAturJadwal(); }, 100);
     }
 
     function hapusJadwal(id) {
         if (!confirm('Yakin hapus jadwal ini?')) return;
         let data = getData('jadwalPelajaran').filter(j => j.id !== id);
         setData('jadwalPelajaran', data);
-        renderJadwal();
+        renderAturJadwal();
     }
 
     function hapusSemuaJadwal() {
-        const hari = document.getElementById('filterHariJadwal').value;
-        const kelas = document.getElementById('filterKelasJadwal').value;
-        if (!confirm('Yakin hapus SEMUA jadwal hari ' + hari + ' Kelas ' + kelas + '?')) return;
-        let data = getData('jadwalPelajaran').filter(j => !(j.hari === hari && j.kelas === kelas));
-        _memStore['jadwalPelajaran'] = JSON.stringify(data);
+        const hari = document.getElementById('filterHariAturJadwal').value;
+        const kelas = document.getElementById('filterKelasAturJadwal').value;
+        const data = getData('jadwalPelajaran');
+        const filtered = data.filter(j => j.hari === hari && j.kelas === kelas);
+        if (filtered.length === 0) { alert('Tidak ada jadwal yang bisa dihapus.'); return; }
+        if (!confirm('Yakin hapus SEMUA jadwal ' + hari + ' Kelas ' + kelas + '?')) return;
+        let sisa = data.filter(j => !(j.hari === hari && j.kelas === kelas));
+        _memStore['jadwalPelajaran'] = JSON.stringify(sisa);
         _syncToServer('jadwalPelajaran');
-        setTimeout(function() { renderJadwal(); }, 100);
+        setTimeout(function() { renderAturJadwal(); }, 100);
     }
 
     // ===== KALENDER LIBUR =====
