@@ -2304,13 +2304,16 @@
             tbody.innerHTML = '<tr><td colspan="99" style="text-align:center;color:#999;padding:30px;">Tidak ada data nilai</td></tr>';
         } else {
             let maxUH = 2;
+            let maxPR = 1;
             data.forEach(n => {
                 if (n.uh && n.uh.length > maxUH) maxUH = n.uh.length;
+                if (n.pr && n.pr.length > maxPR) maxPR = n.pr.length;
             });
 
             const thead = document.querySelector('#page-rekapNilai table thead tr');
             let headerHTML = '<th>No</th><th>NISN</th><th>Nama Siswa</th><th>Kelas</th><th>Mata Pelajaran</th><th>Semester</th>';
             for (let i = 1; i <= maxUH; i++) headerHTML += `<th>UH ${i}</th>`;
+            for (let i = 1; i <= maxPR; i++) headerHTML += `<th>PR ${i}</th>`;
             headerHTML += '<th>UTS</th><th>UAS</th><th>Rata-rata</th><th>Grade</th>';
             thead.innerHTML = headerHTML;
 
@@ -2318,6 +2321,7 @@
                 const avg = hitungRataRata(n);
                 const g = getGrade(avg);
                 const uh = n.uh || [];
+                const pr = n.pr || [];
                 const kkmKey = `kkm_${n.mapel}_${n.semester}`;
                 const kkmVal = parseInt(_memStore[kkmKey]) || 0;
                 const isBelowKKM = kkmVal > 0 && avg < kkmVal;
@@ -2325,6 +2329,10 @@
                 let uhCells = '';
                 for (let j = 0; j < maxUH; j++) {
                     uhCells += `<td>${uh[j] !== undefined ? uh[j] : '-'}</td>`;
+                }
+                let prCells = '';
+                for (let j = 0; j < maxPR; j++) {
+                    prCells += `<td>${pr[j] !== undefined ? pr[j] : '-'}</td>`;
                 }
                 return `
                     <tr style="${rowBg}">
@@ -2335,6 +2343,7 @@
                         <td>${n.mapel}</td>
                         <td>${n.semester}</td>
                         ${uhCells}
+                        ${prCells}
                         <td>${n.uts}</td>
                         <td>${n.uas}</td>
                         <td style="font-weight:bold;${isBelowKKM ? 'color:#c62828;' : ''}">${avg.toFixed(1)}${isBelowKKM ? ' ⚠️' : ''}</td>
