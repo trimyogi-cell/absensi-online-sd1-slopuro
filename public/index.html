@@ -579,6 +579,11 @@
                         <button class="btn-add-uh" onclick="tambahUHNilai()" style="padding:4px 10px;">+</button>
                         <span id="uhCountLabel" style="font-size:0.85em;">2</span>
                         <button class="btn-remove-uh" onclick="hapusUHNilai()" style="padding:4px 10px;">-</button>
+                        <span style="margin-left:15px; font-size:0.85em; color:#555; font-weight:500;">Jumlah PR:</span>
+                        <button class="btn-add-uh" onclick="tambahPRNilai()" style="padding:4px 10px;">+</button>
+                        <span id="prCountLabel" style="font-size:0.85em;">1</span>
+                        <button class="btn-remove-uh" onclick="hapusPRNilai()" style="padding:4px 10px;">-</button>
+                        <button class="btn btn-warning btn-sm" onclick="editPRLabels()" style="padding:3px 10px; font-size:0.8em;">✏️ Edit Nama PR</button>
                         <span style="margin-left:15px; font-size:0.85em; color:#555; font-weight:500;">KKM:</span>
                         <input type="number" id="inputKKM" min="0" max="100" placeholder="75" style="width:60px; padding:4px 8px; border:1px solid #ddd; border-radius:6px; font-size:0.85em; text-align:center;" onchange="saveKKM()">
                         <button class="btn btn-primary btn-sm" onclick="saveKKM()" style="padding:3px 10px; font-size:0.8em;">💾 Simpan KKM</button>
@@ -1382,9 +1387,11 @@
         const uh = n.uh || [];
         const jumlahUH = uh.length;
         const totalUH = uh.reduce((s, v) => s + v, 0);
-        const pr = n.pr || 0;
-        const totalNilai = totalUH + n.uts + n.uas + pr;
-        const pembagi = jumlahUH + 3;
+        const pr = n.pr || [];
+        const jumlahPR = pr.length;
+        const totalPR = pr.reduce((s, v) => s + v, 0);
+        const totalNilai = totalUH + totalPR + n.uts + n.uas;
+        const pembagi = jumlahUH + jumlahPR + 2;
         return pembagi > 0 ? (totalNilai / pembagi) : 0;
     }
 
@@ -1822,6 +1829,8 @@
 
     // ===== CRUD NILAI (INLINE) =====
     let jumlahUH = 2;
+    let jumlahPR = 1;
+    let prLabels = ['PR 1'];
 
     function getKKMKey() {
         const mapel = document.getElementById('filterMapelNilai')?.value || '';
@@ -1902,12 +1911,41 @@
         }
     }
 
+    function tambahPRNilai() {
+        jumlahPR++;
+        prLabels.push('PR ' + jumlahPR);
+        updateUHHeader();
+        renderNilaiInline();
+    }
+
+    function hapusPRNilai() {
+        if (jumlahPR > 1) {
+            jumlahPR--;
+            prLabels.pop();
+            updateUHHeader();
+            renderNilaiInline();
+        }
+    }
+
+    function editPRLabels() {
+        let input = prompt('Edit nama PR (pisahkan koma):\nContoh: PR 1, PR 2, Tugas Kelompok', prLabels.join(', '));
+        if (input === null) return;
+        let parts = input.split(',').map(s => s.trim()).filter(s => s);
+        if (parts.length === 0) return;
+        prLabels = parts;
+        jumlahPR = parts.length;
+        updateUHHeader();
+        renderNilaiInline();
+    }
+
     function updateUHHeader() {
         document.getElementById('uhCountLabel').textContent = jumlahUH;
+        document.getElementById('prCountLabel').textContent = jumlahPR;
         const thead = document.getElementById('headerNilai');
         let html = '<th>No</th><th>NISN</th><th>Nama Siswa</th><th>Kelas</th>';
         for (let i = 1; i <= jumlahUH; i++) html += `<th>UH ${i}</th>`;
-        html += '<th>PR</th><th>UTS</th><th>UAS</th><th>Rata-rata</th><th>Grade</th>';
+        for (let i = 0; i < jumlahPR; i++) html += `<th>${prLabels[i] || 'PR ' + (i+1)}</th>`;
+        html += '<th>UTS</th><th>UAS</th><th>Rata-rata</th><th>Grade</th>';
         thead.innerHTML = html;
     }
 
@@ -1924,19 +1962,24 @@
 
         const tbody = document.getElementById('tabelNilai');
         if (!mapel || !semester) {
-            tbody.innerHTML = '<tr><td colspan="' + (4 + jumlahUH + 5) + '" style="text-align:center;color:#999;padding:30px;">Pilih Mata Pelajaran dan Semester terlebih dahulu</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="' + (4 + jumlahUH + jumlahPR + 4) + '" style="text-align:center;color:#999;padding:30px;">Pilih Mata Pelajaran dan Semester terlebih dahulu</td></tr>';
             return;
         }
         if (filteredSiswa.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="' + (4 + jumlahUH + 5) + '" style="text-align:center;color:#999;padding:30px;">Tidak ada data siswa</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="' + (4 + jumlahUH + jumlahPR + 4) + '" style="text-align:center;color:#999;padding:30px;">Tidak ada data siswa</td></tr>';
             return;
         }
 
-        // Cek apakah ada data nilai dengan jumlah UH lebih besar
+        // Cek apakah ada data nilai dengan jumlah UH atau PR lebih besar
         nilai.forEach(n => {
-            if (n.mapel === mapel && n.semester === semester && n.uh && n.uh.length > jumlahUH) {
-                jumlahUH = n.uh.length;
-                updateUHHeader();
+            if (n.mapel === mapel && n.semester === semester) {
+                if (n.uh && n.uh.length > jumlahUH) {
+                    jumlahUH = n.uh.length;
+                }
+                if (n.pr && n.pr.length > jumlahPR) {
+                    jumlahPR = n.pr.length;
+                    while (prLabels.length < jumlahPR) prLabels.push('PR ' + prLabels.length);
+                }
             }
         });
 
@@ -1946,7 +1989,7 @@
         tbody.innerHTML = filteredSiswa.map((s, i) => {
             const n = nilai.find(x => x.nisn === s.nisn && x.mapel === mapel && x.semester === semester);
             const uh = n ? (n.uh || []) : [];
-            const pr = n ? (n.pr || 0) : 0;
+            const pr = n ? (n.pr || []) : [];
             const uts = n ? (n.uts || 0) : 0;
             const uas = n ? (n.uas || 0) : 0;
             const avg = n ? hitungRataRata(n) : 0;
@@ -1959,6 +2002,11 @@
                 uhInputs += `<td><input type="number" class="inline-input nilai-uh" data-nisn="${s.nisn}" data-idx="${j}" value="${uh[j] !== undefined ? uh[j] : ''}" min="0" max="100" placeholder="0" style="width:60px;"></td>`;
             }
 
+            let prInputs = '';
+            for (let j = 0; j < jumlahPR; j++) {
+                prInputs += `<td><input type="number" class="inline-input nilai-pr" data-nisn="${s.nisn}" data-idx="${j}" value="${pr[j] !== undefined ? pr[j] : ''}" min="0" max="100" placeholder="0" style="width:60px;"></td>`;
+            }
+
             return `
                 <tr style="${rowBg}">
                     <td>${i + 1}</td>
@@ -1966,7 +2014,7 @@
                     <td>${s.nama}</td>
                     <td>${s.kelas}</td>
                     ${uhInputs}
-                    <td><input type="number" class="inline-input nilai-pr" data-nisn="${s.nisn}" value="${pr || ''}" min="0" max="100" placeholder="0" style="width:60px;"></td>
+                    ${prInputs}
                     <td><input type="number" class="inline-input nilai-uts" data-nisn="${s.nisn}" value="${uts || ''}" min="0" max="100" placeholder="0" style="width:60px;"></td>
                     <td><input type="number" class="inline-input nilai-uas" data-nisn="${s.nisn}" value="${uas || ''}" min="0" max="100" placeholder="0" style="width:60px;"></td>
                     <td style="font-weight:bold;${isBelowKKM ? 'color:#c62828;' : ''}">${avg ? avg.toFixed(1) : '-'}${isBelowKKM ? ' ⚠️' : ''}</td>
@@ -2000,35 +2048,36 @@
         uhInputs.forEach(inp => {
             const nisn = inp.dataset.nisn;
             const idx = parseInt(inp.dataset.idx);
-            if (!nisnMap[nisn]) nisnMap[nisn] = { uh: [] };
+            if (!nisnMap[nisn]) nisnMap[nisn] = { uh: [], pr: [] };
             nisnMap[nisn].uh[idx] = parseFloat(inp.value) || 0;
         });
 
         prInputs.forEach(inp => {
             const nisn = inp.dataset.nisn;
-            if (!nisnMap[nisn]) nisnMap[nisn] = { uh: [] };
-            nisnMap[nisn].pr = parseFloat(inp.value) || 0;
+            const idx = parseInt(inp.dataset.idx);
+            if (!nisnMap[nisn]) nisnMap[nisn] = { uh: [], pr: [] };
+            nisnMap[nisn].pr[idx] = parseFloat(inp.value) || 0;
         });
 
         utsInputs.forEach(inp => {
             const nisn = inp.dataset.nisn;
-            if (!nisnMap[nisn]) nisnMap[nisn] = { uh: [] };
+            if (!nisnMap[nisn]) nisnMap[nisn] = { uh: [], pr: [] };
             nisnMap[nisn].uts = parseFloat(inp.value) || 0;
         });
 
         uasInputs.forEach(inp => {
             const nisn = inp.dataset.nisn;
-            if (!nisnMap[nisn]) nisnMap[nisn] = { uh: [] };
+            if (!nisnMap[nisn]) nisnMap[nisn] = { uh: [], pr: [] };
             nisnMap[nisn].uas = parseFloat(inp.value) || 0;
         });
 
         Object.keys(nisnMap).forEach(nisn => {
             const v = nisnMap[nisn];
             const uh = (v.uh || []).map(x => x || 0);
-            const pr = v.pr || 0;
+            const pr = (v.pr || []).map(x => x || 0);
             const uts = v.uts || 0;
             const uas = v.uas || 0;
-            if (uh.some(x => x > 0) || pr > 0 || uts > 0 || uas > 0) {
+            if (uh.some(x => x > 0) || pr.some(x => x > 0) || uts > 0 || uas > 0) {
                 data.push({ id: generateId(), nisn, mapel, semester, uh, pr, uts, uas });
             }
         });
