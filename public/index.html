@@ -1382,8 +1382,9 @@
         const uh = n.uh || [];
         const jumlahUH = uh.length;
         const totalUH = uh.reduce((s, v) => s + v, 0);
-        const totalNilai = totalUH + n.uts + n.uas;
-        const pembagi = jumlahUH + 2;
+        const pr = n.pr || 0;
+        const totalNilai = totalUH + n.uts + n.uas + pr;
+        const pembagi = jumlahUH + 3;
         return pembagi > 0 ? (totalNilai / pembagi) : 0;
     }
 
@@ -1906,7 +1907,7 @@
         const thead = document.getElementById('headerNilai');
         let html = '<th>No</th><th>NISN</th><th>Nama Siswa</th><th>Kelas</th>';
         for (let i = 1; i <= jumlahUH; i++) html += `<th>UH ${i}</th>`;
-        html += '<th>UTS</th><th>UAS</th><th>Rata-rata</th><th>Grade</th>';
+        html += '<th>PR</th><th>UTS</th><th>UAS</th><th>Rata-rata</th><th>Grade</th>';
         thead.innerHTML = html;
     }
 
@@ -1923,11 +1924,11 @@
 
         const tbody = document.getElementById('tabelNilai');
         if (!mapel || !semester) {
-            tbody.innerHTML = '<tr><td colspan="' + (4 + jumlahUH + 4) + '" style="text-align:center;color:#999;padding:30px;">Pilih Mata Pelajaran dan Semester terlebih dahulu</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="' + (4 + jumlahUH + 5) + '" style="text-align:center;color:#999;padding:30px;">Pilih Mata Pelajaran dan Semester terlebih dahulu</td></tr>';
             return;
         }
         if (filteredSiswa.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="' + (4 + jumlahUH + 4) + '" style="text-align:center;color:#999;padding:30px;">Tidak ada data siswa</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="' + (4 + jumlahUH + 5) + '" style="text-align:center;color:#999;padding:30px;">Tidak ada data siswa</td></tr>';
             return;
         }
 
@@ -1945,6 +1946,7 @@
         tbody.innerHTML = filteredSiswa.map((s, i) => {
             const n = nilai.find(x => x.nisn === s.nisn && x.mapel === mapel && x.semester === semester);
             const uh = n ? (n.uh || []) : [];
+            const pr = n ? (n.pr || 0) : 0;
             const uts = n ? (n.uts || 0) : 0;
             const uas = n ? (n.uas || 0) : 0;
             const avg = n ? hitungRataRata(n) : 0;
@@ -1964,6 +1966,7 @@
                     <td>${s.nama}</td>
                     <td>${s.kelas}</td>
                     ${uhInputs}
+                    <td><input type="number" class="inline-input nilai-pr" data-nisn="${s.nisn}" value="${pr || ''}" min="0" max="100" placeholder="0" style="width:60px;"></td>
                     <td><input type="number" class="inline-input nilai-uts" data-nisn="${s.nisn}" value="${uts || ''}" min="0" max="100" placeholder="0" style="width:60px;"></td>
                     <td><input type="number" class="inline-input nilai-uas" data-nisn="${s.nisn}" value="${uas || ''}" min="0" max="100" placeholder="0" style="width:60px;"></td>
                     <td style="font-weight:bold;${isBelowKKM ? 'color:#c62828;' : ''}">${avg ? avg.toFixed(1) : '-'}${isBelowKKM ? ' ⚠️' : ''}</td>
@@ -1991,6 +1994,7 @@
         const uhInputs = document.querySelectorAll('.nilai-uh');
         const utsInputs = document.querySelectorAll('.nilai-uts');
         const uasInputs = document.querySelectorAll('.nilai-uas');
+        const prInputs = document.querySelectorAll('.nilai-pr');
 
         const nisnMap = {};
         uhInputs.forEach(inp => {
@@ -1998,6 +2002,12 @@
             const idx = parseInt(inp.dataset.idx);
             if (!nisnMap[nisn]) nisnMap[nisn] = { uh: [] };
             nisnMap[nisn].uh[idx] = parseFloat(inp.value) || 0;
+        });
+
+        prInputs.forEach(inp => {
+            const nisn = inp.dataset.nisn;
+            if (!nisnMap[nisn]) nisnMap[nisn] = { uh: [] };
+            nisnMap[nisn].pr = parseFloat(inp.value) || 0;
         });
 
         utsInputs.forEach(inp => {
@@ -2015,10 +2025,11 @@
         Object.keys(nisnMap).forEach(nisn => {
             const v = nisnMap[nisn];
             const uh = (v.uh || []).map(x => x || 0);
+            const pr = v.pr || 0;
             const uts = v.uts || 0;
             const uas = v.uas || 0;
-            if (uh.some(x => x > 0) || uts > 0 || uas > 0) {
-                data.push({ id: generateId(), nisn, mapel, semester, uh, uts, uas });
+            if (uh.some(x => x > 0) || pr > 0 || uts > 0 || uas > 0) {
+                data.push({ id: generateId(), nisn, mapel, semester, uh, pr, uts, uas });
             }
         });
 
