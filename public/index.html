@@ -1206,7 +1206,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
     // ===== SUPABASE DIRECT CONNECTION =====
     const _SB_URL = 'https://bploaeidnrrtmfqyrlrl.supabase.co';
@@ -3509,16 +3509,16 @@
         if (cari) siswa = siswa.filter(s => (s.nama || '').toLowerCase().includes(cari) || String(s.nisn).includes(cari));
         siswa.sort((a, b) => (a.nama || '').localeCompare(b.nama || '', 'id'));
         if (siswa.length === 0) { alert('Tidak ada siswa yang cocok untuk dicetak.'); return; }
-        if (typeof QRCode === 'undefined' || !QRCode.toDataURL) { alert('Library QR belum dimuat. Periksa koneksi internet.'); return; }
+        if (typeof QRCode === 'undefined') { alert('Library QR belum dimuat. Periksa koneksi internet.'); return; }
 
         const w = window.open('', '_blank', 'width=900,height=700');
         if (!w) { alert('Browser memblokir jendela popup. Izinkan popup untuk situs ini lalu coba lagi.'); return; }
         w.document.write('<html><head><title>Menyiapkan kartu QR...</title></head><body style="font-family:Arial,sans-serif;text-align:center;padding-top:40px;">Menyiapkan kartu QR, mohon tunggu...</body></html>');
 
-        (async () => {
+        try {
             const cards = [];
             for (const s of siswa) {
-                const url = await QRCode.toDataURL('ABSENSI:' + s.nisn, { width: 300, margin: 1, errorCorrectionLevel: 'M' });
+                const url = qrDataUrl('ABSENSI:' + s.nisn);
                 cards.push(
                     '<div class="qr-card">' +
                         '<div class="qr-school">ABSENSI SD NEGERI 1 SLOPURO</div>' +
@@ -3543,7 +3543,18 @@
             );
             w.document.close();
             setTimeout(() => { w.focus(); w.print(); }, 800);
-        })();
+        } catch (err) {
+            alert('Gagal membuat kartu QR: ' + err.message);
+            w.close();
+        }
+    }
+
+    function qrDataUrl(text) {
+        const div = document.createElement('div');
+        new QRCode(div, { text: text, width: 300, height: 300, correctLevel: QRCode.CorrectLevel.M });
+        const canvas = div.querySelector('canvas');
+        if (!canvas) throw new Error('Canvas QR tidak tersedia di browser ini');
+        return canvas.toDataURL('image/png');
     }
 
     init();
