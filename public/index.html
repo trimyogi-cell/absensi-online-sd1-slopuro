@@ -529,8 +529,7 @@
                             <option value="5">Kelas 5</option>
                             <option value="6">Kelas 6</option>
                         </select>
-                        <button class="btn btn-primary" onclick="openModalJadwal()">+ Tambah Jam</button>
-                        <button class="btn btn-warning" onclick="hapusDitandaiJadwal()">🗑️ Hapus Ditandai</button>
+                        <button class="btn btn-success" onclick="simpanSemuaJadwal()">💾 Simpan Jadwal</button>
                         <button class="btn btn-danger" onclick="hapusSemuaJadwal()">🗑️ Hapus Semua</button>
                     </div>
                 </div>
@@ -538,11 +537,12 @@
                     <div style="overflow-x:auto;">
                     <table>
                         <thead>
-                            <tr><th><input type="checkbox" id="cekAllJadwal" onchange="toggleAllJadwal()"></th><th>Jam Ke-</th><th>Mata Pelajaran</th><th>Guru</th><th>Jam Pelajaran</th><th>Aksi</th></tr>
+                            <tr><th style="width:70px;text-align:center;">Jam Ke-</th><th>Mata Pelajaran</th><th>Guru</th><th>Jam Pelajaran</th></tr>
                         </thead>
                         <tbody id="tabelAturJadwal"></tbody>
                     </table>
                     </div>
+                    <p style="font-size:0.8em;color:#666;margin-top:12px;">✏️ Isi semua jam pelajaran untuk hari ini, lalu klik <strong>💾 Simpan Jadwal</strong>. Kosongkan yang tidak ada pelajaran.</p>
                 </div>
             </div>
         </div>
@@ -2833,26 +2833,52 @@
         const hari = document.getElementById('filterHariAturJadwal').value;
         const kelas = getKelasFilter('filterKelasAturJadwal');
         const data = getData('jadwalPelajaran');
-        const filtered = data.filter(j => j.hari === hari && j.kelas === kelas);
-        filtered.sort((a, b) => (a.jamke || 0) - (b.jamke || 0));
+        const map = {};
+        data.filter(j => j.hari === hari && j.kelas === kelas).forEach(j => { map[String(j.jamke)] = j; });
 
         const tbody = document.getElementById('tabelAturJadwal');
-        if (filtered.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;padding:30px;">Belum ada jadwal. Klik "+ Tambah Jam" untuk menambahkan.</td></tr>';
-            return;
+        let rows = '';
+        for (let i = 1; i <= 15; i++) {
+            const j = map[String(i)];
+            const esc = function(v) { return (v == null ? '' : String(v)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
+            rows += `
+                <tr>
+                    <td style="text-align:center;font-weight:bold;">${i}</td>
+                    <td style="padding:4px;"><input type="text" class="form-control" id="jadMapel_${i}" value="${esc(j && j.mapel)}" placeholder="—" style="width:100%;"></td>
+                    <td style="padding:4px;"><input type="text" class="form-control" id="jadGuru_${i}" value="${esc(j && j.guru)}" placeholder="—" style="width:100%;"></td>
+                    <td style="padding:4px;"><input type="text" class="form-control" id="jadJam_${i}" value="${esc(j && j.jam)}" placeholder="07:00 - 07:45" style="width:100%;"></td>
+                </tr>`;
         }
-        tbody.innerHTML = filtered.map(j => `
-            <tr>
-                <td><input type="checkbox" class="cek-jadwal" data-id="${j.id}"></td>
-                <td style="text-align:center;font-weight:bold;">${j.jamke}</td>
-                <td>${j.mapel}</td>
-                <td>${j.guru}</td>
-                <td>${j.jam}</td>
-                <td>
-                    <button class="btn btn-warning btn-sm" onclick="editJadwal('${j.id}')">✏️</button>
-                </td>
-            </tr>
-        `).join('');
+        tbody.innerHTML = rows;
+    }
+
+    function simpanSemuaJadwal() {
+        const hari = document.getElementById('filterHariAturJadwal').value;
+        const kelas = getKelasFilter('filterKelasAturJadwal');
+        let data = getData('jadwalPelajaran');
+        const existing = {};
+        data.filter(j => j.hari === hari && j.kelas === kelas).forEach(j => { existing[String(j.jamke)] = j; });
+        const baru = [];
+        let count = 0;
+        for (let i = 1; i <= 15; i++) {
+            const mapel = document.getElementById('jadMapel_' + i).value.trim();
+            if (!mapel) continue;
+            const guru = document.getElementById('jadGuru_' + i).value.trim();
+            const jam = document.getElementById('jadJam_' + i).value.trim();
+            const old = existing[String(i)];
+            if (old) {
+                old.mapel = mapel; old.guru = guru; old.jam = jam;
+                baru.push(old);
+            } else {
+                baru.push({ id: generateId(), hari, kelas, jamke: i, mapel, guru, jam });
+            }
+            count++;
+        }
+        data = data.filter(j => !(j.hari === hari && j.kelas === kelas)).concat(baru);
+        _memStore['jadwalPelajaran'] = JSON.stringify(data);
+        _syncToServer('jadwalPelajaran');
+        renderAturJadwal();
+        alert('Jadwal ' + hari + ' Kelas ' + kelas + ' berhasil disimpan (' + count + ' jam pelajaran)!');
     }
 
     function toggleAllJadwal() {
