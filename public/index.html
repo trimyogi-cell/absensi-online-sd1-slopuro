@@ -1104,7 +1104,7 @@
         </div>
         <div class="modal-body">
             <div style="margin-bottom:10px; font-size:0.85em; color:#555;">
-                Tanggal absen: <strong id="scanTglInfo"></strong> — arahkan kamera ke kartu QR siswa. Scan akan otomatis menandai <strong>Hadir</strong>.
+                Tanggal absen: <strong id="scanTglInfo"></strong> — arahkan kamera ke kartu QR siswa. Scan akan otomatis menandai <strong>Hadir</strong>. Setiap siswa hanya bisa absen <strong>1 kali per hari</strong> (ubah lewat aplikasi).
             </div>
             <div id="qr-reader" style="width:100%;"></div>
             <div id="scanStatus" class="qr-scan-status" style="color:#666;">Menunggu scan...</div>
@@ -3483,6 +3483,13 @@
         const now = Date.now();
         if (_qrLastScan[nisn] && now - _qrLastScan[nisn] < 4000) return;
         _qrLastScan[nisn] = now;
+
+        const tgl = document.getElementById('filterTglAbsensi').value;
+        const sudahAda = getData('absensi').find(a => a.nisn === nisn && a.tanggal === tgl);
+        if (sudahAda) {
+            tambahScanList(siswa.nama + ' (Kelas ' + siswa.kelas + ')', '❌ Sudah absen hari ini (ubah via aplikasi)', 'err');
+            return;
+        }
 
         const jam = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
         simpanSatuAbsensi(nisn, 'Hadir', 'Scan QR ' + jam);
