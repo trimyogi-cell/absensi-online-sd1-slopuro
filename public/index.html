@@ -682,7 +682,7 @@
                             <option value="6">Kelas 6</option>
                         </select>
                         <button class="btn btn-warning" onclick="window.print()">🖨️ Cetak</button>
-                        <button class="btn btn-success" onclick="exportTableToExcel('tabelRekapAbsensiContainer','Rekap_Absensi')">📊 Excel</button>
+                        <button class="btn btn-success" onclick="exportTableToExcel('tabelRekapAbsensiContainer','Rekap_Absensi', getKelasFilter('rekapKelasAbs'))">📊 Excel</button>
                         <button class="btn btn-primary" style="background:#2e7d32;" onclick="exportToPDF()">📄 PDF</button>
                     </div>
                 </div>
@@ -697,7 +697,7 @@
                     </div>
                 </div>
                 <div class="sticky-hscroll" id="hscrollRekapAbs"></div>
-                <div class="print-footer" style="display:none;">
+                <div class="print-footer" style="display:none;" id="printFooterAbs">
                     <p>Dicetak pada: <span id="printDate"></span></p>
                     <div class="sig-row">
                         <div class="sig-box">
@@ -757,7 +757,7 @@
                             <option value="6">Kelas 6</option>
                         </select>
                         <button class="btn btn-warning" onclick="window.print()">🖨️ Cetak</button>
-                        <button class="btn btn-success" onclick="exportTableToExcel('tabelRekapNilai','Rekap_Nilai')">📊 Excel</button>
+                        <button class="btn btn-success" onclick="exportTableToExcel('tabelRekapNilai','Rekap_Nilai', getKelasFilter('rekapKelasNilai'))">📊 Excel</button>
                         <button class="btn btn-primary" style="background:#2e7d32;" onclick="exportToPDF()">📄 PDF</button>
                         <button class="btn btn-info" id="btnRekapSemesterNilai" onclick="toggleRekapSemesterNilai()" style="background:#6a1b9a;">📋 Rekap Semester</button>
                     </div>
@@ -773,7 +773,7 @@
                     </div>
                 </div>
                 <div class="sticky-hscroll" id="hscrollRekapNilai"></div>
-                <div class="print-footer" style="display:none;">
+                <div class="print-footer" style="display:none;" id="printFooterNilai">
                     <p>Dicetak pada: <span id="printDate"></span></p>
                     <div class="sig-row">
                         <div class="sig-box">
@@ -931,27 +931,26 @@
                             </div>
                         </div>
                     </div>
-                    <h3 style="font-size:1em;color:#1a73e8;margin-bottom:12px;">👩‍🏫 Wali Kelas</h3>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
-                        <div class="form-group">
-                            <label style="font-size:0.85em;font-weight:500;">Nama Wali Kelas</label>
-                            <input type="text" class="form-control" id="setWaliKelas" placeholder="Nama Wali Kelas" style="width:100%;">
-                        </div>
-                        <div class="form-group">
-                            <label style="font-size:0.85em;font-weight:500;">NIP Wali Kelas</label>
-                            <input type="text" class="form-control" id="setNipWali" placeholder="NIP Wali Kelas" style="width:100%;">
-                        </div>
-                        <div class="form-group">
-                            <label style="font-size:0.85em;font-weight:500;">Kelas</label>
-                            <select class="form-control" id="setKelasWali" style="width:100%;">
-                                <option value="1">Kelas 1</option>
-                                <option value="2">Kelas 2</option>
-                                <option value="3" selected>Kelas 3</option>
-                                <option value="4">Kelas 4</option>
-                                <option value="5">Kelas 5</option>
-                                <option value="6">Kelas 6</option>
-                            </select>
-                        </div>
+                    <h3 style="font-size:1em;color:#1a73e8;margin-bottom:12px;">👩‍🏫 Wali Kelas Per Kelas</h3>
+                    <div style="margin-bottom:20px;padding:14px;background:#fff8f0;border-radius:10px;border:1px solid #ffe0b2;">
+                        <small style="color:#555;display:block;margin-bottom:10px;">Nama dan NIP wali kelas mengikuti kelasnya. Otomatis dipakai di tanda tangan laporan/ekspor sesuai kelas.</small>
+                        <table style="width:100%;border-collapse:collapse;font-size:0.9em;">
+                            <thead>
+                                <tr>
+                                    <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #ffe0b2;">Kelas</th>
+                                    <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #ffe0b2;">Nama Wali Kelas</th>
+                                    <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #ffe0b2;">NIP</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td style="padding:6px 8px;font-weight:600;">Kelas 1</td><td style="padding:4px;"><input type="text" class="form-control" id="waliNama1" style="width:100%;"></td><td style="padding:4px;"><input type="text" class="form-control" id="waliNip1" style="width:100%;"></td></tr>
+                                <tr><td style="padding:6px 8px;font-weight:600;">Kelas 2</td><td style="padding:4px;"><input type="text" class="form-control" id="waliNama2" style="width:100%;"></td><td style="padding:4px;"><input type="text" class="form-control" id="waliNip2" style="width:100%;"></td></tr>
+                                <tr><td style="padding:6px 8px;font-weight:600;">Kelas 3</td><td style="padding:4px;"><input type="text" class="form-control" id="waliNama3" style="width:100%;"></td><td style="padding:4px;"><input type="text" class="form-control" id="waliNip3" style="width:100%;"></td></tr>
+                                <tr><td style="padding:6px 8px;font-weight:600;">Kelas 4</td><td style="padding:4px;"><input type="text" class="form-control" id="waliNama4" style="width:100%;"></td><td style="padding:4px;"><input type="text" class="form-control" id="waliNip4" style="width:100%;"></td></tr>
+                                <tr><td style="padding:6px 8px;font-weight:600;">Kelas 5</td><td style="padding:4px;"><input type="text" class="form-control" id="waliNama5" style="width:100%;"></td><td style="padding:4px;"><input type="text" class="form-control" id="waliNip5" style="width:100%;"></td></tr>
+                                <tr><td style="padding:6px 8px;font-weight:600;">Kelas 6</td><td style="padding:4px;"><input type="text" class="form-control" id="waliNama6" style="width:100%;"></td><td style="padding:4px;"><input type="text" class="form-control" id="waliNip6" style="width:100%;"></td></tr>
+                            </tbody>
+                        </table>
                     </div>
                     <h3 style="font-size:1em;color:#1a73e8;margin-bottom:12px;">🔐 Akun Login</h3>
                     <div style="margin-bottom:20px;padding:14px;background:#f3f4ff;border-radius:10px;border:1px solid #c5cae9;">
@@ -3267,9 +3266,12 @@
         const s = JSON.parse(_memStore['pengaturanSekolah'] || '{}');
         document.getElementById('setKepsek').value = s.kepsek || '';
         document.getElementById('setNipKepsek').value = s.nipKepsek || '';
-        document.getElementById('setWaliKelas').value = s.waliKelas || '';
-        document.getElementById('setNipWali').value = s.nipWali || '';
-        document.getElementById('setKelasWali').value = s.kelasWali || '3';
+        const wm = s.waliKelasMap || {};
+        for (let k = 1; k <= 6; k++) {
+            const w = wm[k] || {};
+            document.getElementById('waliNama' + k).value = w.nama || '';
+            document.getElementById('waliNip' + k).value = w.nip || '';
+        }
         loadDriveUrlIntoForm();
         applyLogo();
         try {
@@ -3299,12 +3301,20 @@
 
     async function simpanPengaturan() {
         const existingP = JSON.parse(_memStore['pengaturanSekolah'] || '{}');
+        const waliKelasMap = {};
+        for (let k = 1; k <= 6; k++) {
+            waliKelasMap[k] = {
+                nama: document.getElementById('waliNama' + k).value.trim(),
+                nip: document.getElementById('waliNip' + k).value.trim()
+            };
+        }
         const s = {
             kepsek: document.getElementById('setKepsek').value.trim(),
             nipKepsek: document.getElementById('setNipKepsek').value.trim(),
-            waliKelas: document.getElementById('setWaliKelas').value.trim(),
-            nipWali: document.getElementById('setNipWali').value.trim(),
-            kelasWali: document.getElementById('setKelasWali').value,
+            waliKelasMap: waliKelasMap,
+            waliKelas: waliKelasMap['3'].nama,
+            nipWali: waliKelasMap['3'].nip,
+            kelasWali: '3',
             logo: existingP.logo || ''
         };
         const accounts = [
@@ -3326,6 +3336,20 @@
     }
     function getPengaturan() {
         return JSON.parse(_memStore['pengaturanSekolah'] || '{}');
+    }
+
+    function getWaliFor(kelas) {
+        const s = getPengaturan();
+        const k = String(kelas == null ? '' : kelas);
+        const m = s.waliKelasMap || {};
+        const w = m[k] || m[Number(k)];
+        if (w && (w.nama || w.nip)) {
+            return { nama: w.nama || '', nip: w.nip || '', kelas: k };
+        }
+        if (k === String(s.kelasWali)) {
+            return { nama: s.waliKelas || '', nip: s.nipWali || '', kelas: k };
+        }
+        return { nama: '', nip: '', kelas: k };
     }
 
     // ===== TOGGLE PASSWORD =====
@@ -3407,16 +3431,21 @@
     }
 
     // ===== EXPORT EXCEL (CSV) =====
-    function exportTableToExcel(tableId, filename) {
+    function exportTableToExcel(tableId, filename, kelas) {
         const table = document.getElementById(tableId);
         if (!table) { alert('Tabel tidak ditemukan!'); return; }
         
         const pengaturanSekolah = JSON.parse(_memStore['pengaturanSekolah'] || '{}');
         const kepsek = pengaturanSekolah.kepsek || '.........................';
         const nipKepsek = pengaturanSekolah.nipKepsek || '.........................';
-        const waliKelas = pengaturanSekolah.waliKelas || '.........................';
-        const nipWali = pengaturanSekolah.nipWali || '.........................';
-        const kelas = pengaturanSekolah.kelasWali || '.................';
+        if (!kelas) {
+            if (tableId.indexOf('Absensi') >= 0) kelas = getKelasFilter('rekapKelasAbs');
+            else if (tableId.indexOf('Nilai') >= 0) kelas = getKelasFilter('rekapKelasNilai');
+        }
+        const wali = getWaliFor(kelas);
+        const waliKelas = wali.nama || '.........................';
+        const nipWali = wali.nip || '.........................';
+        const kelasOut = wali.kelas || '.................';
         
         const bulanNama = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
         const now = new Date();
@@ -3496,7 +3525,7 @@
         csv.push('"_________________________","","","_________________________"');
         csv.push('"' + kepsek + '","","","' + waliKelas + '"');
         csv.push('"' + 'NIP. ' + nipKepsek + '","","","' + 'NIP. ' + nipWali + '"');
-        csv.push('"' + 'Kelas ' + kelas + '"');
+        csv.push('"' + 'Kelas ' + kelasOut + '"');
         
         const blob = new Blob(['\uFEFF' + csv.join('\n')], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
@@ -3776,9 +3805,20 @@
         const pengaturanSekolah = JSON.parse(_memStore['pengaturanSekolah'] || '{}');
         document.querySelectorAll('#printKepsek').forEach(el => el.textContent = pengaturanSekolah.kepsek || '.........................');
         document.querySelectorAll('#printNipKepsek').forEach(el => el.textContent = 'NIP. ' + (pengaturanSekolah.nipKepsek || '.........................'));
-        document.querySelectorAll('#printWaliKelas').forEach(el => el.textContent = pengaturanSekolah.waliKelas || '.........................');
-        document.querySelectorAll('#printNipWali').forEach(el => el.textContent = 'NIP. ' + (pengaturanSekolah.nipWali || '.........................'));
-        document.querySelectorAll('#printKelasWali').forEach(el => el.textContent = 'Kelas ' + (pengaturanSekolah.kelasWali || '...'));
+        const waliAbs = getWaliFor(getKelasFilter('rekapKelasAbs'));
+        const waliNilai = getWaliFor(getKelasFilter('rekapKelasNilai'));
+        const footerAbs = document.getElementById('printFooterAbs');
+        const footerNilai = document.getElementById('printFooterNilai');
+        if (footerAbs) {
+            footerAbs.querySelector('#printWaliKelas').textContent = waliAbs.nama || '.........................';
+            footerAbs.querySelector('#printNipWali').textContent = 'NIP. ' + (waliAbs.nip || '.........................');
+            footerAbs.querySelector('#printKelasWali').textContent = 'Kelas ' + (waliAbs.kelas || '...');
+        }
+        if (footerNilai) {
+            footerNilai.querySelector('#printWaliKelas').textContent = waliNilai.nama || '.........................';
+            footerNilai.querySelector('#printNipWali').textContent = 'NIP. ' + (waliNilai.nip || '.........................');
+            footerNilai.querySelector('#printKelasWali').textContent = 'Kelas ' + (waliNilai.kelas || '...');
+        }
     });
 
     function syncHScroll(tableId, barId) {
