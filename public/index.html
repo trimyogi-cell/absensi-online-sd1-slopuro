@@ -407,7 +407,7 @@
                             <option value="Jumat">Jumat</option>
                             <option value="Sabtu">Sabtu</option>
                         </select>
-                        <select id="filterKelasJadwal" onchange="renderJadwal()">
+                        <select id="filterKelasJadwal" onchange="onKelasJadwalChange()">
                             <option value="1">Kelas 1</option>
                             <option value="2">Kelas 2</option>
                             <option value="3" selected>Kelas 3</option>
@@ -430,7 +430,7 @@
             </div>
             <div class="card">
                 <div class="card-header">
-                    <h2>Absensi Hari Ini</h2>
+                    <h2>Absensi Hari Ini <span id="dashboardAbsensiKelas" style="font-size:0.7em;color:#666;font-weight:400;"></span></h2>
                 </div>
                 <div class="card-body">
                     <div style="overflow-x:auto;">
@@ -1726,22 +1726,52 @@
         
         document.getElementById('totalSiswa').textContent = siswa.length;
         
-        const absenHariIni = absensi.filter(a => a.tanggal === today);
-        document.getElementById('totalHadir').textContent = absenHariIni.filter(a => a.status === 'Hadir').length;
-        document.getElementById('totalSakit').textContent = absenHariIni.filter(a => a.status === 'Sakit').length;
-        document.getElementById('totalIzin').textContent = absenHariIni.filter(a => a.status === 'Izin').length;
-        document.getElementById('totalAlpa').textContent = absenHariIni.filter(a => a.status === 'Alpa').length;
-        
         if (nilai.length > 0) {
             const rataRata = nilai.reduce((sum, n) => {
                 return sum + hitungRataRata(n);
             }, 0) / nilai.length;
             document.getElementById('rataRata').textContent = rataRata.toFixed(1);
         }
-        
+        renderDashboardAbsensi(siswa, absensi);
+
+        var hariList = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+        var hariIni = hariList[new Date().getDay()];
+        if (hariIni !== 'Minggu') {
+            document.getElementById('filterHariJadwal').value = hariIni;
+        }
+        renderWaliKelas();
+        renderJadwal();
+    }
+
+    function renderDashboardAbsensi(siswa, absensi) {
+        if (!siswa || !absensi) {
+            siswa = getData('siswa');
+            absensi = getData('absensi');
+            if (_roleKelas) {
+                const nisns = new Set(siswa.filter(s => String(s.kelas) === _roleKelas).map(s => s.nisn));
+                siswa = siswa.filter(s => nisns.has(s.nisn));
+                absensi = absensi.filter(a => nisns.has(a.nisn));
+            }
+        }
+        const today = getTodayStr();
+        let absenHariIni = absensi.filter(a => a.tanggal === today);
+        const kelasJadwal = getKelasFilter('filterKelasJadwal');
+        const labelKelas = document.getElementById('dashboardAbsensiKelas');
+        if (kelasJadwal) {
+            const nisnsKelas = new Set(siswa.filter(s => String(s.kelas) === kelasJadwal).map(s => s.nisn));
+            absenHariIni = absenHariIni.filter(a => nisnsKelas.has(a.nisn));
+            if (labelKelas) labelKelas.textContent = '— Kelas ' + kelasJadwal;
+        } else if (labelKelas) {
+            labelKelas.textContent = '';
+        }
+        document.getElementById('totalHadir').textContent = absenHariIni.filter(a => a.status === 'Hadir').length;
+        document.getElementById('totalSakit').textContent = absenHariIni.filter(a => a.status === 'Sakit').length;
+        document.getElementById('totalIzin').textContent = absenHariIni.filter(a => a.status === 'Izin').length;
+        document.getElementById('totalAlpa').textContent = absenHariIni.filter(a => a.status === 'Alpa').length;
+
         const tbody = document.getElementById('dashboardAbsensi');
         if (absenHariIni.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;padding:30px;">Belum ada data absensi hari ini</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;padding:30px;">Belum ada data absensi untuk kelas ini hari ini</td></tr>';
         } else {
             tbody.innerHTML = absenHariIni.map((a, i) => `
                 <tr>
@@ -1754,14 +1784,11 @@
                 </tr>
             `).join('');
         }
+    }
 
-        var hariList = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
-        var hariIni = hariList[new Date().getDay()];
-        if (hariIni !== 'Minggu') {
-            document.getElementById('filterHariJadwal').value = hariIni;
-        }
-        renderWaliKelas();
+    function onKelasJadwalChange() {
         renderJadwal();
+        renderDashboardAbsensi();
     }
 
     function renderWaliKelas() {
