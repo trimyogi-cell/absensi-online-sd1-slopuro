@@ -101,6 +101,12 @@
         .qr-scan-item.ok { background: #e8f5e9; }
         .qr-scan-item.err { background: #ffebee; }
 
+        /* Password show/hide */
+        .pass-wrap { position: relative; }
+        .pass-wrap input { width: 100%; padding-right: 34px; }
+        .pass-toggle { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 1em; padding: 2px 6px; color: #666; line-height: 1; }
+        .pass-toggle:hover { color: #1a73e8; }
+
         /* Kartu QR - cetak di halaman (tanpa popup) */
         #kartuQRPrint { display: none; }
         @page cards { size: A4 portrait; margin: 10mm; }
@@ -265,7 +271,10 @@
 <!-- LOGIN OVERLAY -->
 <div id="loginOverlay" style="display:flex;position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#1a73e8,#0d47a1);z-index:9999;align-items:center;justify-content:center;">
     <div style="background:white;border-radius:16px;padding:40px;width:360px;box-shadow:0 8px 32px rgba(0,0,0,0.3);text-align:center;">
-        <div style="font-size:3em;margin-bottom:8px;">📚</div>
+        <div style="margin-bottom:8px;text-align:center;">
+            <img id="loginLogo" src="" alt="Logo" style="max-height:90px;max-width:100%;display:none;">
+            <div id="loginLogoDefault" style="font-size:3em;">📚</div>
+        </div>
         <h2 style="color:#333;margin-bottom:4px;">SD Negeri 1 Selopuro</h2>
         <p style="color:#888;font-size:0.85em;margin-bottom:24px;">Aplikasi Absensi & Nilai</p>
         <div style="text-align:left;margin-bottom:16px;">
@@ -274,7 +283,10 @@
         </div>
         <div style="text-align:left;margin-bottom:20px;">
             <label style="font-size:0.85em;color:#555;font-weight:500;">Password</label>
-            <input type="password" id="loginPass" class="form-control" placeholder="Masukkan password" style="width:100%;margin-top:4px;" onkeydown="if(event.key==='Enter')doLogin()">
+            <div class="pass-wrap" style="margin-top:4px;">
+                <input type="password" id="loginPass" class="form-control" placeholder="Masukkan password" onkeydown="if(event.key==='Enter')doLogin()">
+                <button type="button" class="pass-toggle" onclick="togglePass('loginPass', this)" title="Lihat/sembunyikan password">👁</button>
+            </div>
         </div>
         <div id="loginError" style="color:#c62828;font-size:0.85em;margin-bottom:12px;display:none;">Username atau password salah!</div>
         <button class="btn btn-primary" onclick="doLogin()" style="width:100%;padding:12px;font-size:1em;">Masuk</button>
@@ -286,7 +298,10 @@
     <div style="display:flex;align-items:center;gap:10px;">
         <button id="mobileMenuBtn" style="display:none;background:none;border:none;color:white;font-size:1.5em;cursor:pointer;" onclick="toggleMobileMenu()">☰</button>
         <div>
-            <h1>📚 ABSENSI SD N 1 SELOPURO</h1>
+            <div style="display:flex;align-items:center;gap:10px;">
+                <img id="headerLogo" src="" alt="Logo" style="height:38px;display:none;">
+                <h1>ABSENSI SD N 1 SELOPURO</h1>
+            </div>
             <div class="subtitle">SD Negeri 1 Selopuro</div>
         </div>
     </div>
@@ -899,6 +914,23 @@
                             <input type="text" class="form-control" id="setNipKepsek" placeholder="NIP Kepala Sekolah" style="width:100%;">
                         </div>
                     </div>
+                    <h3 style="font-size:1em;color:#1a73e8;margin-bottom:12px;">🏷️ Logo Aplikasi</h3>
+                    <div style="display:flex;gap:20px;align-items:center;margin-bottom:20px;padding:14px;background:#f5f8ff;border-radius:10px;border:1px solid #d0e0ff;">
+                        <div style="width:90px;height:90px;border:2px dashed #90a4ae;border-radius:12px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:white;flex-shrink:0;">
+                            <img id="logoPreview" src="" alt="Logo" style="max-width:100%;max-height:100%;display:none;">
+                            <span id="logoPreviewDefault" style="font-size:2.5em;">📚</span>
+                        </div>
+                        <div style="flex:1;">
+                            <div style="margin-bottom:10px;">
+                                <input type="file" id="inputLogo" accept="image/*" onchange="previewLogo(this)" style="font-size:0.85em;">
+                                <small style="display:block;color:#666;margin-top:4px;">Gunakan gambar persegi (PNG/JPG). Logo tampil di halaman login dan header aplikasi.</small>
+                            </div>
+                            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                                <button class="btn btn-primary" onclick="simpanLogo()">💾 Simpan Logo</button>
+                                <button class="btn" style="background:#eee;color:#333;" onclick="resetLogo()">↩️ Kembalikan Logo Bawaan</button>
+                            </div>
+                        </div>
+                    </div>
                     <h3 style="font-size:1em;color:#1a73e8;margin-bottom:12px;">👩‍🏫 Wali Kelas</h3>
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
                         <div class="form-group">
@@ -933,13 +965,13 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr><td style="padding:6px 8px;font-weight:600;">👑 Administrator</td><td style="padding:4px;"><input type="text" class="form-control" id="userAdmin" style="width:100%;"></td><td style="padding:4px;"><input type="password" class="form-control" id="passAdmin" style="width:100%;"></td></tr>
-                                <tr><td style="padding:6px 8px;">Kelas 1</td><td style="padding:4px;"><input type="text" class="form-control" id="user1" style="width:100%;"></td><td style="padding:4px;"><input type="password" class="form-control" id="pass1" style="width:100%;"></td></tr>
-                                <tr><td style="padding:6px 8px;">Kelas 2</td><td style="padding:4px;"><input type="text" class="form-control" id="user2" style="width:100%;"></td><td style="padding:4px;"><input type="password" class="form-control" id="pass2" style="width:100%;"></td></tr>
-                                <tr><td style="padding:6px 8px;">Kelas 3</td><td style="padding:4px;"><input type="text" class="form-control" id="user3" style="width:100%;"></td><td style="padding:4px;"><input type="password" class="form-control" id="pass3" style="width:100%;"></td></tr>
-                                <tr><td style="padding:6px 8px;">Kelas 4</td><td style="padding:4px;"><input type="text" class="form-control" id="user4" style="width:100%;"></td><td style="padding:4px;"><input type="password" class="form-control" id="pass4" style="width:100%;"></td></tr>
-                                <tr><td style="padding:6px 8px;">Kelas 5</td><td style="padding:4px;"><input type="text" class="form-control" id="user5" style="width:100%;"></td><td style="padding:4px;"><input type="password" class="form-control" id="pass5" style="width:100%;"></td></tr>
-                                <tr><td style="padding:6px 8px;">Kelas 6</td><td style="padding:4px;"><input type="text" class="form-control" id="user6" style="width:100%;"></td><td style="padding:4px;"><input type="password" class="form-control" id="pass6" style="width:100%;"></td></tr>
+                                <tr><td style="padding:6px 8px;font-weight:600;">👑 Administrator</td><td style="padding:4px;"><input type="text" class="form-control" id="userAdmin" style="width:100%;"></td><td style="padding:4px;"><div class="pass-wrap"><input type="password" class="form-control" id="passAdmin"><button type="button" class="pass-toggle" onclick="togglePass('passAdmin', this)" title="Lihat/sembunyikan">👁</button></div></td></tr>
+                                <tr><td style="padding:6px 8px;">Kelas 1</td><td style="padding:4px;"><input type="text" class="form-control" id="user1" style="width:100%;"></td><td style="padding:4px;"><div class="pass-wrap"><input type="password" class="form-control" id="pass1"><button type="button" class="pass-toggle" onclick="togglePass('pass1', this)" title="Lihat/sembunyikan">👁</button></div></td></tr>
+                                <tr><td style="padding:6px 8px;">Kelas 2</td><td style="padding:4px;"><input type="text" class="form-control" id="user2" style="width:100%;"></td><td style="padding:4px;"><div class="pass-wrap"><input type="password" class="form-control" id="pass2"><button type="button" class="pass-toggle" onclick="togglePass('pass2', this)" title="Lihat/sembunyikan">👁</button></div></td></tr>
+                                <tr><td style="padding:6px 8px;">Kelas 3</td><td style="padding:4px;"><input type="text" class="form-control" id="user3" style="width:100%;"></td><td style="padding:4px;"><div class="pass-wrap"><input type="password" class="form-control" id="pass3"><button type="button" class="pass-toggle" onclick="togglePass('pass3', this)" title="Lihat/sembunyikan">👁</button></div></td></tr>
+                                <tr><td style="padding:6px 8px;">Kelas 4</td><td style="padding:4px;"><input type="text" class="form-control" id="user4" style="width:100%;"></td><td style="padding:4px;"><div class="pass-wrap"><input type="password" class="form-control" id="pass4"><button type="button" class="pass-toggle" onclick="togglePass('pass4', this)" title="Lihat/sembunyikan">👁</button></div></td></tr>
+                                <tr><td style="padding:6px 8px;">Kelas 5</td><td style="padding:4px;"><input type="text" class="form-control" id="user5" style="width:100%;"></td><td style="padding:4px;"><div class="pass-wrap"><input type="password" class="form-control" id="pass5"><button type="button" class="pass-toggle" onclick="togglePass('pass5', this)" title="Lihat/sembunyikan">👁</button></div></td></tr>
+                                <tr><td style="padding:6px 8px;">Kelas 6</td><td style="padding:4px;"><input type="text" class="form-control" id="user6" style="width:100%;"></td><td style="padding:4px;"><div class="pass-wrap"><input type="password" class="form-control" id="pass6"><button type="button" class="pass-toggle" onclick="togglePass('pass6', this)" title="Lihat/sembunyikan">👁</button></div></td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -3239,6 +3271,7 @@
         document.getElementById('setNipWali').value = s.nipWali || '';
         document.getElementById('setKelasWali').value = s.kelasWali || '3';
         loadDriveUrlIntoForm();
+        applyLogo();
         try {
             const auth = await _sbGet('authUser');
             fillAccountFields(Array.isArray(auth) ? auth : []);
@@ -3265,12 +3298,14 @@
     }
 
     async function simpanPengaturan() {
+        const existingP = JSON.parse(_memStore['pengaturanSekolah'] || '{}');
         const s = {
             kepsek: document.getElementById('setKepsek').value.trim(),
             nipKepsek: document.getElementById('setNipKepsek').value.trim(),
             waliKelas: document.getElementById('setWaliKelas').value.trim(),
             nipWali: document.getElementById('setNipWali').value.trim(),
-            kelasWali: document.getElementById('setKelasWali').value
+            kelasWali: document.getElementById('setKelasWali').value,
+            logo: existingP.logo || ''
         };
         const accounts = [
             { role: 'admin', user: document.getElementById('userAdmin').value.trim(), pass: document.getElementById('passAdmin').value },
@@ -3291,6 +3326,84 @@
     }
     function getPengaturan() {
         return JSON.parse(_memStore['pengaturanSekolah'] || '{}');
+    }
+
+    // ===== TOGGLE PASSWORD =====
+    function togglePass(id, btn) {
+        const inp = document.getElementById(id);
+        if (!inp) return;
+        const show = inp.type === 'password';
+        inp.type = show ? 'text' : 'password';
+        if (btn) btn.textContent = show ? '🙈' : '👁';
+    }
+
+    // ===== LOGO APLIKASI =====
+    let _logoDraft = '';
+
+    function getLogo() {
+        return getPengaturan().logo || '';
+    }
+
+    function applyLogo() {
+        const logo = getLogo();
+        const hdr = document.getElementById('headerLogo');
+        const login = document.getElementById('loginLogo');
+        const loginDef = document.getElementById('loginLogoDefault');
+        if (logo) {
+            if (hdr) { hdr.src = logo; hdr.style.display = ''; }
+            if (login) { login.src = logo; login.style.display = ''; }
+            if (loginDef) loginDef.style.display = 'none';
+        } else {
+            if (hdr) hdr.style.display = 'none';
+            if (login) login.style.display = 'none';
+            if (loginDef) loginDef.style.display = '';
+        }
+        const prev = document.getElementById('logoPreview');
+        const prevDef = document.getElementById('logoPreviewDefault');
+        if (prev) {
+            if (logo) { prev.src = logo; prev.style.display = ''; }
+            else prev.style.display = 'none';
+            if (prevDef) prevDef.style.display = logo ? 'none' : '';
+        }
+    }
+
+    function previewLogo(input) {
+        const file = input && input.files && input.files[0];
+        if (!file) return;
+        if (!file.type.startsWith('image/')) { alert('Pilih file gambar!'); input.value = ''; return; }
+        if (file.size > 500 * 1024) { alert('Ukuran logo maksimal 500 KB!'); input.value = ''; return; }
+        const reader = new FileReader();
+        reader.onload = e => {
+            _logoDraft = e.target.result;
+            const prev = document.getElementById('logoPreview');
+            const prevDef = document.getElementById('logoPreviewDefault');
+            if (prev) { prev.src = _logoDraft; prev.style.display = ''; }
+            if (prevDef) prevDef.style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function simpanLogo() {
+        if (!_logoDraft) { alert('Pilih file logo terlebih dahulu!'); return; }
+        const p = getPengaturan();
+        p.logo = _logoDraft;
+        _memStore['pengaturanSekolah'] = JSON.stringify(p);
+        _syncToServer('pengaturanSekolah');
+        _logoDraft = '';
+        document.getElementById('inputLogo').value = '';
+        applyLogo();
+        alert('Logo berhasil disimpan!');
+    }
+
+    function resetLogo() {
+        const p = getPengaturan();
+        delete p.logo;
+        _memStore['pengaturanSekolah'] = JSON.stringify(p);
+        _syncToServer('pengaturanSekolah');
+        _logoDraft = '';
+        document.getElementById('inputLogo').value = '';
+        applyLogo();
+        alert('Logo kembali ke bawaan.');
     }
 
     // ===== EXPORT EXCEL (CSV) =====
@@ -3493,6 +3606,7 @@
         
         importDataSiswa();
         loadDriveUrlIntoForm();
+        applyLogo();
 
         const hariList = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
         const hariIni = hariList[now.getDay()];
