@@ -798,12 +798,12 @@
                         <button class="btn btn-warning" onclick="window.print()">🖨️ Cetak</button>
                         <button class="btn btn-success" onclick="exportTableToExcel('tabelRekapNilai','Rekap_Nilai', getKelasFilter('rekapKelasNilai'))">📊 Excel</button>
                         <button class="btn btn-primary" style="background:#2e7d32;" onclick="exportToPDF()">📄 PDF</button>
-                        <button class="btn btn-info" id="btnRekapSemesterNilai" onclick="toggleRekapSemesterNilai()" style="background:#6a1b9a;">📋 Rekap Semester</button>
+                        <button class="btn btn-info" id="btnRekapSemesterNilai" onclick="toggleRekapSemesterNilai()" style="background:#4a148c;">📋 Tabel Detail</button>
                     </div>
                 </div>
                 <div class="card-body">
                     <div style="overflow-x:auto;">
-                    <table id="tabelRekapNilai">
+                    <table id="tabelRekapNilai" class="rekap-tbl">
                         <thead>
                             <tr><th>No</th><th>NISN</th><th>Nama Siswa</th><th>Kelas</th><th>Mata Pelajaran</th><th>Semester</th><th>UTS</th><th>UAS</th><th>Rata-rata</th><th>Grade</th></tr>
                         </thead>
@@ -1707,10 +1707,10 @@
                 renderRekapAbsensi();
                 break;
             case 'rekapNilai':
-                rekapSemesterNilaiMode = false;
-                document.getElementById('btnRekapSemesterNilai').textContent = '📋 Rekap Semester';
-                document.getElementById('btnRekapSemesterNilai').style.background = '#6a1b9a';
-                renderRekapNilai();
+                rekapSemesterNilaiMode = true;
+                document.getElementById('btnRekapSemesterNilai').textContent = '📋 Tabel Detail';
+                document.getElementById('btnRekapSemesterNilai').style.background = '#4a148c';
+                renderRekapSemesterNilai();
                 break;
             case 'editGrade': loadGrade(); break;
             case 'kalender': populateYearKalender(); renderKalender(); break;
@@ -2742,7 +2742,9 @@
     // ===== REKAP NILAI =====
     function renderRekapNilai() {
         document.getElementById('rekapNilaiTitle').textContent = 'Rekap Nilai Siswa';
-        document.querySelector('#page-rekapNilai table').classList.add('rt');
+        const rekapTbl = document.querySelector('#page-rekapNilai table');
+        rekapTbl.classList.add('rt');
+        rekapTbl.classList.remove('rekap-tbl');
         const mapel = document.getElementById('rekapMapel').value;
         const semester = document.getElementById('rekapSemesterNilai').value;
         const kelas = getKelasFilter('rekapKelasNilai');
@@ -2763,12 +2765,12 @@
                 if (n.pr && n.pr.length > maxPR) maxPR = n.pr.length;
             });
 
-            const thead = document.querySelector('#page-rekapNilai table thead tr');
+            const theadEl = document.querySelector('#page-rekapNilai table thead');
             let headerHTML = '<th>No</th><th>NISN</th><th>Nama Siswa</th><th>Kelas</th><th>Mata Pelajaran</th><th>Semester</th>';
             for (let i = 1; i <= maxUH; i++) headerHTML += `<th>UH ${i}</th>`;
             for (let i = 1; i <= maxPR; i++) headerHTML += `<th>PR ${i}</th>`;
             headerHTML += '<th>UTS</th><th>UAS</th><th>Rata-rata</th><th>Grade</th>';
-            thead.innerHTML = headerHTML;
+            theadEl.innerHTML = `<tr>${headerHTML}</tr>`;
 
             tbody.innerHTML = data.map((n, i) => {
                 const avg = hitungRataRata(n);
@@ -2808,7 +2810,7 @@
         syncHScroll('tabelRekapNilai', 'hscrollRekapNilai');
     }
 
-    let rekapSemesterNilaiMode = false;
+    let rekapSemesterNilaiMode = true;
     function toggleRekapSemesterNilai() {
         rekapSemesterNilaiMode = !rekapSemesterNilaiMode;
         const btn = document.getElementById('btnRekapSemesterNilai');
@@ -2825,31 +2827,45 @@
 
     function renderRekapSemesterNilai() {
         document.getElementById('rekapNilaiTitle').textContent = 'Rekap Nilai Per Semester';
-        document.querySelector('#page-rekapNilai table').classList.remove('rt');
+        const theadEl = document.querySelector('#page-rekapNilai table thead');
+        const tbody = document.getElementById('tabelRekapNilaiBody');
+        const rekapTbl = document.querySelector('#page-rekapNilai table');
+        rekapTbl.classList.remove('rt');
+        rekapTbl.classList.add('rekap-tbl');
         const semester = document.getElementById('rekapSemesterNilai').value;
+        const mapelSel = document.getElementById('rekapMapel').value;
         const kelas = getKelasFilter('rekapKelasNilai');
         const siswa = getData('siswa');
         const allNilai = getData('nilai');
 
         let filteredSiswa = siswa;
         if (kelas) filteredSiswa = siswa.filter(s => s.kelas === kelas);
+        filteredSiswa.sort((a, b) => (a.nama || '').localeCompare(b.nama || '', 'id'));
 
-        const allMapel = [...new Set(allNilai.map(n => n.mapel))].sort();
+        let allMapel = [...new Set(allNilai.map(n => n.mapel))].sort();
+        if (mapelSel) allMapel = allMapel.filter(m => m === mapelSel);
         const semesterList = semester ? [semester] : ['Ganjil', 'Genap'];
+        const nMapel = allMapel.length;
+        if (nMapel === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;padding:30px;">Belum ada data nilai. Isi nilai di menu Nilai Pelajaran terlebih dahulu.</td></tr>';
+            return;
+        }
+        const sticky = ' class="sticky-col-th" style="text-align:center;"';
 
-        const thead = document.querySelector('#page-rekapNilai table thead tr');
-        let headerHTML = '<th>No</th><th>NISN</th><th>Nama Siswa</th><th>Kelas</th>';
+        let groupRow = `<th${sticky}>No</th><th${sticky}>NISN</th><th${sticky}>Nama Siswa</th><th${sticky}>Kelas</th>`;
+        let mapelRow = `<th${sticky}>No</th><th${sticky}>NISN</th><th${sticky}>Nama Siswa</th><th${sticky}>Kelas</th>`;
         semesterList.forEach(sem => {
+            groupRow += `<th colspan="${Math.max(nMapel, 1)}" style="text-align:center;font-size:0.85em;background:#e3f2fd;font-weight:700;">${sem === 'Ganjil' ? 'SEMESTER GANJIL' : 'SEMESTER GENAP'}</th>`;
             allMapel.forEach(mp => {
-                headerHTML += `<th style="font-size:0.75em;">${mp.substring(0,4)}<br>${sem.substring(0,3)}</th>`;
+                mapelRow += `<th style="text-align:center;font-size:0.75em;min-width:56px;white-space:nowrap;">${mp}<br><span style="font-size:0.8em;color:#666;">${sem.substring(0, 3)}</span></th>`;
             });
         });
-        headerHTML += '<th style="background:#c8e6c9;">Rata-rata<br>Semester</th><th style="background:#c8e6c9;">Grade</th>';
-        thead.innerHTML = headerHTML;
+        groupRow += `<th colspan="2" style="text-align:center;font-size:0.8em;background:#c8e6c9;font-weight:700;">TOTAL SEMESTER</th>`;
+        mapelRow += '<th style="text-align:center;font-size:0.8em;background:#c8e6c9;">Rata-rata</th><th style="text-align:center;font-size:0.8em;background:#c8e6c9;">Grade</th>';
+        theadEl.innerHTML = `<tr>${groupRow}</tr><tr>${mapelRow}</tr>`;
 
-        const tbody = document.getElementById('tabelRekapNilaiBody');
         if (filteredSiswa.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="99" style="text-align:center;color:#999;padding:30px;">Tidak ada data siswa</td></tr>';
+            tbody.innerHTML = `<tr><td colspan="${4 + nMapel * semesterList.length + 2}" style="text-align:center;color:#999;padding:30px;">Tidak ada data siswa</td></tr>`;
             return;
         }
 
@@ -2866,15 +2882,15 @@
                         const kkmKey = `kkm_${mp}_${sem}`;
                         const kkmVal = parseInt(_memStore[kkmKey]) || 0;
                         const isBelowKKM = kkmVal > 0 && avgMapel < kkmVal;
-                        cells += `<td style="text-align:center;font-size:0.85em;font-weight:bold;${isBelowKKM ? 'color:#c62828;background:#fff0f0;' : ''}">${avgMapel.toFixed(1)}${isBelowKKM ? ' ⚠️' : ''}</td>`;
+                        cells += `<td style="text-align:center;font-size:0.8em;font-weight:bold;${isBelowKKM ? 'color:#c62828;background:#fff0f0;' : ''}" title="${mp} ${sem}">${avgMapel.toFixed(1)}${isBelowKKM ? ' ⚠️' : ''}</td>`;
                     } else {
-                        cells += `<td style="text-align:center;color:#ddd;">-</td>`;
+                        cells += `<td style="text-align:center;color:#ddd;font-size:0.8em;" title="${mp} ${sem}">-</td>`;
                     }
                 });
             });
             const totalAvg = avgList.length > 0 ? avgList.reduce((a, b) => a + b, 0) / avgList.length : 0;
             const g = getGrade(totalAvg);
-            return `<tr><td>${i+1}</td><td>${s.nisn}</td><td>${s.nama}</td><td>${s.kelas}</td>${cells}<td style="text-align:center;font-weight:bold;background:#e8f5e9;">${totalAvg > 0 ? totalAvg.toFixed(1) : '-'}</td><td style="text-align:center;">${totalAvg > 0 ? '<span class="badge badge-'+g.cls+'">'+g.grade+'</span>' : '-'}</td></tr>`;
+            return `<tr><td class="sticky-col">${i + 1}</td><td class="sticky-col">${s.nisn}</td><td class="sticky-col">${s.nama}</td><td class="sticky-col">${s.kelas}</td>${cells}<td style="text-align:center;font-weight:bold;background:#e8f5e9;">${totalAvg > 0 ? totalAvg.toFixed(1) : '-'}</td><td style="text-align:center;">${totalAvg > 0 ? '<span class="badge badge-' + g.cls + '">' + g.grade + '</span>' : '-'}</td></tr>`;
         });
         tbody.innerHTML = rows.join('');
         syncHScroll('tabelRekapNilai', 'hscrollRekapNilai');
@@ -3910,7 +3926,7 @@
 
     async function init() {
         const vEl = document.getElementById('appVersion');
-        if (vEl) vEl.textContent = 'v2026.08.18';
+        if (vEl) vEl.textContent = 'v2026.08.19';
         await _loadFromServer();
         document.getElementById('loadingOverlay').style.display = 'none';
         checkLogin();
