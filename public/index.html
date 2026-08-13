@@ -93,6 +93,13 @@
         .modal-close:hover { color: #333; }
         .modal-body { padding: 20px; }
         .modal-footer { padding: 15px 20px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 10px; }
+
+        /* Scan QR */
+        .qr-scan-status { font-size: 0.9em; margin: 10px 0; }
+        .qr-scan-list { max-height: 150px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px; padding: 8px; }
+        .qr-scan-item { display: flex; justify-content: space-between; align-items: center; padding: 4px 6px; border-radius: 6px; margin-bottom: 4px; background: #f6f9ff; font-size: 0.85em; }
+        .qr-scan-item.ok { background: #e8f5e9; }
+        .qr-scan-item.err { background: #ffebee; }
         
         /* Search */
         .search-box { position: relative; }
@@ -418,6 +425,7 @@
                             <option value="5">Kelas 5</option>
                             <option value="6">Kelas 6</option>
                         </select>
+                        <button class="btn btn-primary" onclick="cetakKartuQR()">🖨️ Kartu QR</button>
                     </div>
                 </div>
                 <div class="card-body">
@@ -518,6 +526,7 @@
                                 <option value="6">Kelas 6</option>
                             </select>
                         </div>
+                        <button class="btn btn-primary" onclick="bukaScanQR()">📷 Scan QR</button>
                         <button class="btn btn-success" onclick="simpanSemuaAbsensi()">💾 Simpan Semua</button>
                         <button class="btn btn-danger" onclick="hapusSemuaAbsensi()">🗑️ Hapus Semua</button>
                     </div>
@@ -1070,6 +1079,27 @@
     </div>
 </div>
 
+<!-- Modal Scan QR -->
+<div class="modal" id="modalScanQR">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>📷 Scan Kartu QR</h3>
+            <button class="modal-close" onclick="tutupScanQR()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div style="margin-bottom:10px; font-size:0.85em; color:#555;">
+                Tanggal absen: <strong id="scanTglInfo"></strong> — arahkan kamera ke kartu QR siswa. Scan akan otomatis menandai <strong>Hadir</strong>.
+            </div>
+            <div id="qr-reader" style="width:100%;"></div>
+            <div id="scanStatus" class="qr-scan-status" style="color:#666;">Menunggu scan...</div>
+            <div id="scanList" class="qr-scan-list"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-primary" onclick="tutupScanQR()">Selesai</button>
+        </div>
+    </div>
+</div>
+
 <!-- Modal Nilai -->
 <div class="modal" id="modalNilai">
     <div class="modal-content" style="max-width:600px;">
@@ -1175,6 +1205,8 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <script>
     // ===== SUPABASE DIRECT CONNECTION =====
     const _SB_URL = 'https://bploaeidnrrtmfqyrlrl.supabase.co';
@@ -3382,6 +3414,138 @@
         if (!navigator.onLine) setSyncStatus('offline');
     }
     
+    // ===== SCAN QR & KARTU QR =====
+    let _qrScanner = null;
+    let _qrLastScan = {};
+
+    function bukaScanQR() {
+        const tgl = document.getElementById('filterTglAbsensi').value;
+        if (!tgl) { alert('Pilih tanggal absensi terlebih dahulu di halaman Absensi!'); return; }
+        document.getElementById('scanTglInfo').textContent = tgl;
+        document.getElementById('scanStatus').textContent = 'Menyiapkan kamera...';
+        document.getElementById('scanStatus').style.color = '#666';
+        document.getElementById('scanList').innerHTML = '';
+        openModal('modalScanQR');
+        if (typeof Html5Qrcode === 'undefined') {
+            document.getElementById('scanStatus').textContent = '❌ Library pemindai belum dimuat. Periksa koneksi internet.';
+            document.getElementById('scanStatus').style.color = '#c62828';
+            return;
+        }
+        _qrScanner = new Html5Qrcode('qr-reader');
+        _qrScanner.start(
+            { facingMode: 'environment' },
+            { fps: 10, qrbox: { width: 220, height: 220 } },
+            onQRDecoded,
+            () => {}
+        ).catch(err => {
+            document.getElementById('scanStatus').textContent = '❌ Kamera tidak bisa dibuka: ' + err;
+            document.getElementById('scanStatus').style.color = '#c62828';
+        });
+    }
+
+    function tutupScanQR() {
+        if (_qrScanner) {
+            try { _qrScanner.stop().then(() => _qrScanner.clear()).catch(() => {}); } catch (e) {}
+            _qrScanner = null;
+        }
+        closeModal('modalScanQR');
+    }
+
+    function onQRDecoded(text) {
+        const clean = String(text || '').replace(/\s+/g, '').toUpperCase();
+        const prefix = 'ABSENSI:';
+        if (!clean.startsWith(prefix)) {
+            tambahScanList('-', '❌ Bukan kartu absensi', 'err');
+            return;
+        }
+        const nisn = clean.substring(prefix.length);
+        const siswa = getData('siswa').find(s => String(s.nisn) === nisn);
+        if (!siswa) {
+            tambahScanList(nisn, '❌ Siswa dengan NISN ' + nisn + ' tidak ditemukan', 'err');
+            return;
+        }
+        const now = Date.now();
+        if (_qrLastScan[nisn] && now - _qrLastScan[nisn] < 4000) return;
+        _qrLastScan[nisn] = now;
+
+        const jam = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+        simpanSatuAbsensi(nisn, 'Hadir', 'Scan QR ' + jam);
+        tambahScanList(siswa.nama + ' (Kelas ' + siswa.kelas + ')', '✅ Hadir ' + jam, 'ok');
+    }
+
+    function tambahScanList(nama, info, cls) {
+        const el = document.getElementById('scanList');
+        if (!el) return;
+        const item = document.createElement('div');
+        item.className = 'qr-scan-item ' + cls;
+        item.innerHTML = '<span><strong>' + nama + '</strong></span><span>' + info + '</span>';
+        el.prepend(item);
+        while (el.children.length > 12) el.removeChild(el.lastChild);
+    }
+
+    function simpanSatuAbsensi(nisn, status, keterangan) {
+        const tgl = document.getElementById('filterTglAbsensi').value;
+        if (!tgl) return false;
+        let absensi = getData('absensi');
+        const idx = absensi.findIndex(a => a.nisn === nisn && a.tanggal === tgl);
+        if (idx >= 0) {
+            absensi[idx] = Object.assign({}, absensi[idx], { status: status, keterangan: keterangan });
+        } else {
+            absensi.push({ id: generateId(), nisn: nisn, tanggal: tgl, status: status, keterangan: keterangan });
+        }
+        setData('absensi', absensi);
+        const sel = document.querySelector('.absensi-status[data-nisn="' + nisn + '"]');
+        if (sel) sel.value = status;
+        const ket = document.querySelector('.absensi-ket[data-nisn="' + nisn + '"]');
+        if (ket) ket.value = keterangan || '';
+        return true;
+    }
+
+    function cetakKartuQR() {
+        const kelas = document.getElementById('filterKelasSiswa') ? document.getElementById('filterKelasSiswa').value : '';
+        const cari = document.getElementById('searchSiswa') ? document.getElementById('searchSiswa').value.trim().toLowerCase() : '';
+        let siswa = getData('siswa').filter(s => s.nisn && s.nama);
+        if (kelas) siswa = siswa.filter(s => s.kelas === kelas);
+        if (cari) siswa = siswa.filter(s => (s.nama || '').toLowerCase().includes(cari) || String(s.nisn).includes(cari));
+        siswa.sort((a, b) => (a.nama || '').localeCompare(b.nama || '', 'id'));
+        if (siswa.length === 0) { alert('Tidak ada siswa yang cocok untuk dicetak.'); return; }
+        if (typeof QRCode === 'undefined' || !QRCode.toDataURL) { alert('Library QR belum dimuat. Periksa koneksi internet.'); return; }
+
+        const w = window.open('', '_blank', 'width=900,height=700');
+        if (!w) { alert('Browser memblokir jendela popup. Izinkan popup untuk situs ini lalu coba lagi.'); return; }
+        w.document.write('<html><head><title>Menyiapkan kartu QR...</title></head><body style="font-family:Arial,sans-serif;text-align:center;padding-top:40px;">Menyiapkan kartu QR, mohon tunggu...</body></html>');
+
+        (async () => {
+            const cards = [];
+            for (const s of siswa) {
+                const url = await QRCode.toDataURL('ABSENSI:' + s.nisn, { width: 300, margin: 1, errorCorrectionLevel: 'M' });
+                cards.push(
+                    '<div class="qr-card">' +
+                        '<div class="qr-school">ABSENSI SD NEGERI 1 SLOPURO</div>' +
+                        '<img class="qr-img" src="' + url + '" alt="QR">' +
+                        '<div class="qr-nama">' + s.nama + '</div>' +
+                        '<div class="qr-meta">NISN: ' + s.nisn + ' | Kelas ' + s.kelas + '</div>' +
+                    '</div>'
+                );
+            }
+            w.document.write(
+                '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Kartu QR Absensi</title>' +
+                '<style>' +
+                '@page { size: A4 portrait; margin: 10mm; }' +
+                'body { font-family: Arial, sans-serif; }' +
+                '.qr-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8mm; }' +
+                '.qr-card { border: 2px solid #1a73e8; border-radius: 8px; padding: 8px; text-align: center; page-break-inside: avoid; }' +
+                '.qr-school { font-size: 10px; font-weight: bold; color: #1a73e8; margin-bottom: 4px; }' +
+                '.qr-img { width: 80%; max-width: 120px; }' +
+                '.qr-nama { font-size: 13px; font-weight: bold; margin-top: 4px; }' +
+                '.qr-meta { font-size: 11px; color: #555; }' +
+                '</style></head><body><div class="qr-grid">' + cards.join('') + '</div></body></html>'
+            );
+            w.document.close();
+            setTimeout(() => { w.focus(); w.print(); }, 800);
+        })();
+    }
+
     init();
 
     window.addEventListener('beforeprint', function() {
