@@ -1738,7 +1738,8 @@
     }
 
     function renderInputSiswa() {
-        const data = getData('siswa');
+        let data = getData('siswa');
+        if (_roleKelas) data = data.filter(s => String(s.kelas) === _roleKelas);
         const search = (document.getElementById('searchInputSiswa')?.value || '').toLowerCase();
         const filtered = data.filter(s => 
             (s.nama || '').toLowerCase().includes(search) || 
@@ -1796,12 +1797,17 @@
     }
 
     function hapusSemuaSiswa() {
-        const data = getData('siswa');
-        if (data.length === 0) { alert('Tidak ada data siswa!'); return; }
-        if (!confirm('Yakin hapus SEMUA siswa (' + data.length + ' data)? Data absensi dan nilai juga akan terhapus!')) return;
-        setData('siswa', []);
-        setData('absensi', []);
-        setData('nilai', []);
+        let target = getData('siswa');
+        if (_roleKelas) target = target.filter(s => String(s.kelas) === _roleKelas);
+        if (target.length === 0) { alert('Tidak ada data siswa di kelas ini!'); return; }
+        if (!confirm('Yakin hapus SEMUA siswa (' + target.length + ' data)? Data absensi dan nilai terkait juga akan terhapus!')) return;
+        const nisns = new Set(target.map(s => s.nisn));
+        let sisaSiswa = _roleKelas ? getData('siswa').filter(s => !nisns.has(s.nisn)) : [];
+        let sisaAbsensi = _roleKelas ? getData('absensi').filter(a => !nisns.has(a.nisn)) : [];
+        let sisaNilai = _roleKelas ? getData('nilai').filter(n => !nisns.has(n.nisn)) : [];
+        setData('siswa', sisaSiswa);
+        setData('absensi', sisaAbsensi);
+        setData('nilai', sisaNilai);
         document.getElementById('cekAllSiswa').checked = false;
         renderInputSiswa();
     }
@@ -1831,7 +1837,19 @@
         document.getElementById('inputTglLahir').value = '';
         document.getElementById('inputAlamat').value = '';
         document.getElementById('inputNoHP').value = '';
+        lockModalKelas();
         openModal('modalSiswa');
+    }
+
+    function lockModalKelas() {
+        const el = document.getElementById('inputKelas');
+        if (!el) return;
+        if (_roleKelas) {
+            el.value = _roleKelas;
+            el.disabled = true;
+        } else {
+            el.disabled = false;
+        }
     }
 
     function editSiswa(nisn) {
@@ -1847,6 +1865,7 @@
         document.getElementById('inputTglLahir').value = s.tglLahir;
         document.getElementById('inputAlamat').value = s.alamat;
         document.getElementById('inputNoHP').value = s.noHP;
+        lockModalKelas();
         openModal('modalSiswa');
     }
 
@@ -1988,6 +2007,16 @@
     }
 
     function hapusSemuaAbsensi() {
+        if (_roleKelas) {
+            const nisns = new Set(getData('siswa').filter(s => String(s.kelas) === _roleKelas).map(s => s.nisn));
+            let sisa = getData('absensi').filter(a => !nisns.has(a.nisn));
+            if (sisa.length === getData('absensi').length) { alert('Tidak ada data absensi di kelas ini!'); return; }
+            if (!confirm('Yakin hapus SEMUA data absensi di kelas ' + _roleKelas + '?')) return;
+            setData('absensi', sisa);
+            alert('Data absensi kelas ' + _roleKelas + ' berhasil dihapus!');
+            renderAbsensi();
+            return;
+        }
         if (!confirm('Yakin hapus SEMUA data absensi?')) return;
         setData('absensi', []);
         alert('Semua data absensi berhasil dihapus!');
@@ -2319,6 +2348,16 @@
     }
 
     function hapusSemuaNilai() {
+        if (_roleKelas) {
+            const nisns = new Set(getData('siswa').filter(s => String(s.kelas) === _roleKelas).map(s => s.nisn));
+            let sisa = getData('nilai').filter(n => !nisns.has(n.nisn));
+            if (sisa.length === getData('nilai').length) { alert('Tidak ada data nilai di kelas ini!'); return; }
+            if (!confirm('Yakin hapus SEMUA data nilai di kelas ' + _roleKelas + '?')) return;
+            setData('nilai', sisa);
+            alert('Data nilai kelas ' + _roleKelas + ' berhasil dihapus!');
+            renderNilaiInline();
+            return;
+        }
         if (!confirm('Yakin hapus SEMUA data nilai?')) return;
         setData('nilai', []);
         alert('Semua data nilai berhasil dihapus!');
@@ -2728,7 +2767,7 @@
 
     function renderAturJadwal() {
         const hari = document.getElementById('filterHariAturJadwal').value;
-        const kelas = document.getElementById('filterKelasAturJadwal').value;
+        const kelas = getKelasFilter('filterKelasAturJadwal');
         const data = getData('jadwalPelajaran');
         const filtered = data.filter(j => j.hari === hari && j.kelas === kelas);
         filtered.sort((a, b) => (a.jamke || 0) - (b.jamke || 0));
@@ -2792,7 +2831,7 @@
 
     function simpanJadwal() {
         const hari = document.getElementById('filterHariAturJadwal').value;
-        const kelas = document.getElementById('filterKelasAturJadwal').value;
+        const kelas = getKelasFilter('filterKelasAturJadwal');
         const jamke = parseInt(document.getElementById('inputJamKe').value);
         const mapel = document.getElementById('inputMapelJadwal').value.trim();
         const guru = document.getElementById('inputGuruJadwal').value.trim();
@@ -2830,7 +2869,7 @@
 
     function hapusSemuaJadwal() {
         const hari = document.getElementById('filterHariAturJadwal').value;
-        const kelas = document.getElementById('filterKelasAturJadwal').value;
+        const kelas = getKelasFilter('filterKelasAturJadwal');
         const data = getData('jadwalPelajaran');
         const filtered = data.filter(j => j.hari === hari && j.kelas === kelas);
         if (filtered.length === 0) { alert('Tidak ada jadwal yang bisa dihapus.'); return; }
@@ -3204,11 +3243,11 @@
         return k;
     }
 
-    const _hiddenPages = ['inputSiswa', 'aturJadwal', 'pengaturanSekolah', 'kalender', 'editGrade'];
+    const _hiddenPages = ['pengaturanSekolah', 'kalender', 'editGrade'];
 
     function lockKelasFilters() {
         if (isAdminUser()) return;
-        const ids = ['filterKelasSiswa', 'filterKelasAbsensi', 'filterKelasNilai', 'filterKelasJadwal', 'rekapKelasAbs', 'rekapKelasNilai'];
+        const ids = ['filterKelasSiswa', 'filterKelasAbsensi', 'filterKelasNilai', 'filterKelasJadwal', 'filterKelasAturJadwal', 'rekapKelasAbs', 'rekapKelasNilai'];
         ids.forEach(id => {
             const el = document.getElementById(id);
             if (el) {
