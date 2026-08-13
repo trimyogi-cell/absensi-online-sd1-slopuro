@@ -362,6 +362,33 @@
     <div class="main-content">
         <!-- Dashboard -->
         <div class="page active" id="page-dashboard">
+            <div class="card" style="margin-bottom:20px;">
+                <div class="card-header">
+                    <h2>📅 Pilih Hari & Kelas</h2>
+                    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                        <select id="filterHariJadwal" class="form-control" style="width:auto;" onchange="renderJadwal()">
+                            <option value="Senin">Senin</option>
+                            <option value="Selasa">Selasa</option>
+                            <option value="Rabu">Rabu</option>
+                            <option value="Kamis">Kamis</option>
+                            <option value="Jumat">Jumat</option>
+                            <option value="Sabtu">Sabtu</option>
+                        </select>
+                        <select id="filterKelasJadwal" class="form-control" style="width:auto;" onchange="onKelasJadwalChange()">
+                            <option value="1">Kelas 1</option>
+                            <option value="2">Kelas 2</option>
+                            <option value="3" selected>Kelas 3</option>
+                            <option value="4">Kelas 4</option>
+                            <option value="5">Kelas 5</option>
+                            <option value="6">Kelas 6</option>
+                        </select>
+                        <select id="filterTotalAbsensi" class="form-control" style="width:auto;display:none;" onchange="onTotalAbsensiChange()">
+                            <option value="jadwal">Total Absensi: Per Jadwal</option>
+                            <option value="semua">Total Absensi: Semua Kelas 1–6</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
             <div class="stats-row">
                 <div class="stat-card">
                     <div class="stat-number" id="totalSiswa">0</div>
@@ -395,28 +422,6 @@
             <div class="card">
                 <div class="card-header">
                     <h2>Jadwal Pelajaran Hari Ini</h2>
-                    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-                        <select id="filterHariJadwal" onchange="renderJadwal()">
-                            <option value="Senin">Senin</option>
-                            <option value="Selasa">Selasa</option>
-                            <option value="Rabu">Rabu</option>
-                            <option value="Kamis">Kamis</option>
-                            <option value="Jumat">Jumat</option>
-                            <option value="Sabtu">Sabtu</option>
-                        </select>
-                        <select id="filterKelasJadwal" onchange="onKelasJadwalChange()">
-                            <option value="1">Kelas 1</option>
-                            <option value="2">Kelas 2</option>
-                            <option value="3" selected>Kelas 3</option>
-                            <option value="4">Kelas 4</option>
-                            <option value="5">Kelas 5</option>
-                            <option value="6">Kelas 6</option>
-                        </select>
-                        <select id="filterTotalAbsensi" style="display:none;" onchange="onTotalAbsensiChange()">
-                            <option value="jadwal">Total Absensi: Per Jadwal</option>
-                            <option value="semua">Total Absensi: Semua Kelas 1–6</option>
-                        </select>
-                    </div>
                 </div>
                 <div class="card-body">
                     <div style="overflow-x:auto;">
@@ -3838,7 +3843,7 @@
 
     async function init() {
         const vEl = document.getElementById('appVersion');
-        if (vEl) vEl.textContent = 'v2026.08.13';
+        if (vEl) vEl.textContent = 'v2026.08.14';
         await _loadFromServer();
         document.getElementById('loadingOverlay').style.display = 'none';
         checkLogin();
