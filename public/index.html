@@ -411,6 +411,10 @@
                             <option value="5">Kelas 5</option>
                             <option value="6">Kelas 6</option>
                         </select>
+                        <select id="filterTotalAbsensi" style="display:none;" onchange="onTotalAbsensiChange()">
+                            <option value="jadwal">Total Absensi: Per Jadwal</option>
+                            <option value="semua">Total Absensi: Semua Kelas 1–6</option>
+                        </select>
                     </div>
                 </div>
                 <div class="card-body">
@@ -1743,16 +1747,20 @@
             }
         }
         const today = getTodayStr();
-        let absenHariIni = absensi.filter(a => a.tanggal === today);
-        const kelasJadwal = getKelasFilter('filterKelasJadwal');
+        const totalMode = isAdminUser() && document.getElementById('filterTotalAbsensi') ? document.getElementById('filterTotalAbsensi').value : 'jadwal';
+        const kelasJadwal = (totalMode === 'semua') ? '' : getKelasFilter('filterKelasJadwal');
         const labelKelas = document.getElementById('dashboardAbsensiKelas');
+        let siswas = siswa;
+        let absenHariIni = absensi.filter(a => a.tanggal === today);
         if (kelasJadwal) {
             const nisnsKelas = new Set(siswa.filter(s => String(s.kelas) === kelasJadwal).map(s => s.nisn));
+            siswas = siswa.filter(s => nisnsKelas.has(s.nisn));
             absenHariIni = absenHariIni.filter(a => nisnsKelas.has(a.nisn));
             if (labelKelas) labelKelas.textContent = '— Kelas ' + kelasJadwal;
         } else if (labelKelas) {
-            labelKelas.textContent = '';
+            labelKelas.textContent = totalMode === 'semua' ? '— Semua Kelas 1–6' : '';
         }
+        document.getElementById('totalSiswa').textContent = siswas.length;
         document.getElementById('totalHadir').textContent = absenHariIni.filter(a => a.status === 'Hadir').length;
         document.getElementById('totalSakit').textContent = absenHariIni.filter(a => a.status === 'Sakit').length;
         document.getElementById('totalIzin').textContent = absenHariIni.filter(a => a.status === 'Izin').length;
@@ -1773,6 +1781,10 @@
                 </tr>
             `).join('');
         }
+    }
+
+    function onTotalAbsensiChange() {
+        renderDashboardAbsensi();
     }
 
     function onKelasJadwalChange() {
@@ -3402,6 +3414,8 @@
         });
         const lbl = document.getElementById('headerAccountLabel');
         if (lbl) lbl.textContent = 'Akun: ' + getRoleLabel(_role);
+        const ta = document.getElementById('filterTotalAbsensi');
+        if (ta) ta.style.display = isAdmin ? '' : 'none';
         lockKelasFilters();
     }
 
