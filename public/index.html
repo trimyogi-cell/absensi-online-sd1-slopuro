@@ -1332,6 +1332,34 @@
     }
 
     const _syncTimers = {};
+
+    function _computeDataSig() {
+      let h = 5381;
+      let total = 0;
+      const keys = ['siswa','absensi','nilai','libur','gradeSetting','pengaturanSekolah','authUser','jadwalPelajaran'];
+      for (const k of keys) {
+        const v = _memStore[k] || '';
+        total += v.length;
+        for (let i = 0; i < v.length; i++) { h = ((h * 33) ^ v.charCodeAt(i)) >>> 0; }
+      }
+      return h.toString(36) + '_' + total;
+    }
+
+    function renderCurrentPage() {
+      const cur = document.querySelector('.page.active');
+      if (!cur || !cur.id || cur.id.indexOf('page-') !== 0) return;
+      refreshPage(cur.id.slice(5));
+    }
+
+    function autoRefreshUI() {
+      if (sessionStorage.getItem('loggedIn') !== '1') return;
+      const sig = _computeDataSig();
+      if (sig === _dataSig) return;
+      _dataSig = sig;
+      renderCurrentPage();
+      applyLogo();
+    }
+
     function _syncToServer(key) {
       if (_syncTimers[key]) clearTimeout(_syncTimers[key]);
       _syncTimers[key] = setTimeout(async () => {
@@ -1351,6 +1379,8 @@
       const btn = document.getElementById('btnSyncNow');
       if (btn) btn.disabled = true;
       await _loadFromServer();
+      _dataSig = _computeDataSig();
+      if (sessionStorage.getItem('loggedIn') === '1') renderCurrentPage();
       if (btn) btn.disabled = false;
     }
 
@@ -3233,6 +3263,7 @@
 
     // ===== LOGIN / LOGOUT =====
     let _roleKelas = '';
+    let _dataSig = '';
 
     function getRoleKelas() { return _roleKelas; }
     function isAdminUser() { return _roleKelas === ''; }
@@ -3281,6 +3312,9 @@
                 sessionStorage.setItem('role', acct.role || 'admin');
                 applyRoleUI(acct.role || 'admin');
                 document.getElementById('loginOverlay').style.display = 'none';
+                await _loadFromServer();
+                _dataSig = _computeDataSig();
+                renderCurrentPage();
             } else {
                 document.getElementById('loginError').style.display = 'block';
             }
@@ -3686,7 +3720,7 @@
         
         setInterval(updateRealTimeClock, 1000);
         setInterval(checkDateChange, 30000);
-        setInterval(async () => { await _loadFromServer(); }, 30000);
+        setInterval(async () => { await _loadFromServer(); autoRefreshUI(); }, 30000);
 
         window.addEventListener('online', () => setSyncStatus('online'));
         window.addEventListener('offline', () => setSyncStatus('offline'));
