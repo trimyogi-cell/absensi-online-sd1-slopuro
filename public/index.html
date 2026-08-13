@@ -100,6 +100,21 @@
         .qr-scan-item { display: flex; justify-content: space-between; align-items: center; padding: 4px 6px; border-radius: 6px; margin-bottom: 4px; background: #f6f9ff; font-size: 0.85em; }
         .qr-scan-item.ok { background: #e8f5e9; }
         .qr-scan-item.err { background: #ffebee; }
+
+        /* Kartu QR - cetak di halaman (tanpa popup) */
+        #kartuQRPrint { display: none; }
+        @page cards { size: A4 portrait; margin: 10mm; }
+        @media print {
+            body.printing-cards .sidebar, body.printing-cards .header, body.printing-cards .container,
+            body.printing-cards .btn, body.printing-cards .filter-row, body.printing-cards .search-box,
+            body.printing-cards .sticky-hscroll, body.printing-cards .modal { display: none !important; }
+            body.printing-cards #kartuQRPrint { display: grid !important; grid-template-columns: repeat(3, 1fr); gap: 8mm; page: cards; }
+            body.printing-cards #kartuQRPrint .qr-card { border: 2px solid #1a73e8; border-radius: 8px; padding: 8px; text-align: center; page-break-inside: avoid; }
+            body.printing-cards #kartuQRPrint .qr-school { font-size: 10px; font-weight: bold; color: #1a73e8; margin-bottom: 4px; }
+            body.printing-cards #kartuQRPrint .qr-img { width: 80%; max-width: 120px; }
+            body.printing-cards #kartuQRPrint .qr-nama { font-size: 13px; font-weight: bold; margin-top: 4px; }
+            body.printing-cards #kartuQRPrint .qr-meta { font-size: 11px; color: #555; }
+        }
         
         /* Search */
         .search-box { position: relative; }
@@ -937,6 +952,7 @@
         </div>
     </div>
 </div>
+<div id="kartuQRPrint"></div>
 <div class="modal" id="modalSiswa">
     <div class="modal-content">
         <div class="modal-header">
@@ -3511,41 +3527,26 @@
         if (siswa.length === 0) { alert('Tidak ada siswa yang cocok untuk dicetak.'); return; }
         if (typeof QRCode === 'undefined') { alert('Library QR belum dimuat. Periksa koneksi internet.'); return; }
 
-        const w = window.open('', '_blank', 'width=900,height=700');
-        if (!w) { alert('Browser memblokir jendela popup. Izinkan popup untuk situs ini lalu coba lagi.'); return; }
-        w.document.write('<html><head><title>Menyiapkan kartu QR...</title></head><body style="font-family:Arial,sans-serif;text-align:center;padding-top:40px;">Menyiapkan kartu QR, mohon tunggu...</body></html>');
-
+        const el = document.getElementById('kartuQRPrint');
+        el.innerHTML = '';
         try {
-            const cards = [];
             for (const s of siswa) {
                 const url = qrDataUrl('ABSENSI:' + s.nisn);
-                cards.push(
+                el.innerHTML +=
                     '<div class="qr-card">' +
                         '<div class="qr-school">ABSENSI SD NEGERI 1 SLOPURO</div>' +
                         '<img class="qr-img" src="' + url + '" alt="QR">' +
                         '<div class="qr-nama">' + s.nama + '</div>' +
                         '<div class="qr-meta">NISN: ' + s.nisn + ' | Kelas ' + s.kelas + '</div>' +
-                    '</div>'
-                );
+                    '</div>';
             }
-            w.document.write(
-                '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Kartu QR Absensi</title>' +
-                '<style>' +
-                '@page { size: A4 portrait; margin: 10mm; }' +
-                'body { font-family: Arial, sans-serif; }' +
-                '.qr-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8mm; }' +
-                '.qr-card { border: 2px solid #1a73e8; border-radius: 8px; padding: 8px; text-align: center; page-break-inside: avoid; }' +
-                '.qr-school { font-size: 10px; font-weight: bold; color: #1a73e8; margin-bottom: 4px; }' +
-                '.qr-img { width: 80%; max-width: 120px; }' +
-                '.qr-nama { font-size: 13px; font-weight: bold; margin-top: 4px; }' +
-                '.qr-meta { font-size: 11px; color: #555; }' +
-                '</style></head><body><div class="qr-grid">' + cards.join('') + '</div></body></html>'
-            );
-            w.document.close();
-            setTimeout(() => { w.focus(); w.print(); }, 800);
+            document.body.classList.add('printing-cards');
+            window.print();
         } catch (err) {
             alert('Gagal membuat kartu QR: ' + err.message);
-            w.close();
+        } finally {
+            document.body.classList.remove('printing-cards');
+            el.innerHTML = '';
         }
     }
 
