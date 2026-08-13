@@ -421,7 +421,7 @@
             </div>
             <div class="card">
                 <div class="card-header">
-                    <h2>Jadwal Pelajaran Hari Ini</h2>
+                    <h2>Jadwal Pelajaran Hari Ini <span id="jadwalHariInfo" style="font-size:0.7em;color:#666;font-weight:400;"></span></h2>
                 </div>
                 <div class="card-body">
                     <div style="overflow-x:auto;">
@@ -1435,6 +1435,12 @@
         const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + (target - now.getDay()));
         return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
     }
+    function formatTanggalIndo(dateStr) {
+        const d = new Date(dateStr + 'T00:00:00');
+        const days = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+        const months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+        return days[d.getDay()] + ', ' + d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
+    }
 
     // ===== GOOGLE DRIVE BACKUP (cadangan di samping Supabase) =====
     function getDriveUrl() {
@@ -1761,19 +1767,21 @@
             }
         }
         const today = getDateOfDayName(document.getElementById('filterHariJadwal') ? document.getElementById('filterHariJadwal').value : '');
-        const hariSel = document.getElementById('filterHariJadwal') ? document.getElementById('filterHariJadwal').value : '';
         const totalMode = isAdminUser() && document.getElementById('filterTotalAbsensi') ? document.getElementById('filterTotalAbsensi').value : 'jadwal';
         const kelasJadwal = (totalMode === 'semua') ? '' : getKelasFilter('filterKelasJadwal');
         const labelKelas = document.getElementById('dashboardAbsensiKelas');
+        const labelJadwal = document.getElementById('jadwalHariInfo');
+        const tanggalIndo = formatTanggalIndo(today);
+        if (labelJadwal) labelJadwal.textContent = '— ' + tanggalIndo;
         let siswas = siswa;
         let absenHariIni = absensi.filter(a => a.tanggal === today);
         if (kelasJadwal) {
             const nisnsKelas = new Set(siswa.filter(s => String(s.kelas) === kelasJadwal).map(s => s.nisn));
             siswas = siswa.filter(s => nisnsKelas.has(s.nisn));
             absenHariIni = absenHariIni.filter(a => nisnsKelas.has(a.nisn));
-            if (labelKelas) labelKelas.textContent = '— ' + hariSel + ' · Kelas ' + kelasJadwal;
+            if (labelKelas) labelKelas.textContent = '— ' + tanggalIndo + ' · Kelas ' + kelasJadwal;
         } else if (labelKelas) {
-            labelKelas.textContent = '— ' + hariSel + (totalMode === 'semua' ? ' · Semua Kelas 1–6' : '');
+            labelKelas.textContent = '— ' + tanggalIndo + (totalMode === 'semua' ? ' · Semua Kelas 1–6' : '');
         }
         document.getElementById('totalSiswa').textContent = siswas.length;
         document.getElementById('totalHadir').textContent = absenHariIni.filter(a => a.status === 'Hadir').length;
