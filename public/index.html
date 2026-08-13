@@ -82,6 +82,7 @@
         .form-control { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9em; transition: border-color 0.2s; }
         .form-control:focus { outline: none; border-color: #1a73e8; box-shadow: 0 0 0 3px rgba(26,115,232,0.1); }
         .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
         
         /* Modal */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
@@ -257,6 +258,24 @@
             #page-dashboard .dash-hide-sm { display: none; }
             #page-dashboard .card-header h2 { font-size: 1em; }
             #page-dashboard .card-header h2 span { display: block; font-size: 0.8em; margin-top: 2px; }
+            .form-grid { grid-template-columns: 1fr; }
+            .rt thead { display: none; }
+            .rt, .rt tbody, .rt tr, .rt td { display: block; width: 100%; box-sizing: border-box; }
+            .rt tr { background: #fff; border: 1px solid #e0e0e0; border-radius: 10px; margin-bottom: 10px; padding: 4px 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+            .rt td { display: flex; justify-content: space-between; align-items: center; gap: 10px; border-bottom: 1px dashed #eee; padding: 7px 0; font-size: 0.85em; }
+            .rt td:last-child { border-bottom: none; }
+            .rt td::before { content: attr(data-label); font-weight: 600; color: #666; flex-shrink: 0; }
+            .rt td[data-label=""]::before { content: none; }
+            .rt td > * { flex: 1; min-width: 0; }
+            .rt td input[type="checkbox"] { flex: 0 0 auto; }
+            .rt .inline-select { width: 100%; }
+            .rt .inline-input { width: 100%; }
+            .rt td:last-child > * { flex: 1; }
+            #page-pengaturanSekolah .logo-row { flex-direction: column; align-items: flex-start; }
+            #page-pengaturanSekolah h3 { font-size: 0.95em; }
+            .card-header .filter-row select { max-width: 100%; }
+            .card-header .btn { white-space: nowrap; }
+            .card-body { padding: 12px; }
         }
     </style>
 </head>
@@ -480,7 +499,7 @@
                 </div>
                 <div class="card-body">
                     <div style="overflow-x:auto;">
-                    <table>
+                    <table class="rt">
                         <thead>
                             <tr><th style="width:40px;text-align:center;">No</th><th>NISN</th><th>Nama Lengkap</th><th>Jenis Kelamin</th><th>Kelas</th><th>Tempat Lahir</th><th>Tanggal Lahir</th><th>Alamat</th><th>No. Ortu</th></tr>
                         </thead>
@@ -507,7 +526,7 @@
                 </div>
                 <div class="card-body">
                     <div style="overflow-x:auto;">
-                    <table>
+                    <table class="rt">
                         <thead>
                             <tr><th><input type="checkbox" id="cekAllSiswa" onchange="toggleAllSiswa()"></th><th>No</th><th>NISN</th><th>Nama Lengkap</th><th>Jenis Kelamin</th><th>Kelas</th><th>Tempat Lahir</th><th>Tanggal Lahir</th><th>Alamat</th><th>No. Ortu</th><th>Aksi</th></tr>
                         </thead>
@@ -546,7 +565,7 @@
                 </div>
                 <div class="card-body">
                     <div style="overflow-x:auto;">
-                    <table>
+                    <table class="rt">
                         <thead>
                             <tr><th style="width:70px;text-align:center;">Jam Ke-</th><th>Mata Pelajaran</th><th>Guru</th><th>Jam Pelajaran</th></tr>
                         </thead>
@@ -583,7 +602,7 @@
                 </div>
                 <div class="card-body">
                     <div style="overflow-x:auto;">
-                    <table>
+                    <table class="rt">
                         <thead>
                             <tr><th>No</th><th>NISN</th><th>Nama Siswa</th><th>Kelas</th><th>Status</th><th>Keterangan</th></tr>
                         </thead>
@@ -924,7 +943,7 @@
                 </div>
                 <div class="card-body">
                     <h3 style="font-size:1em;color:#1a73e8;margin-bottom:12px;">🏫 Data Sekolah</h3>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
+                    <div class="form-grid">
                         <div class="form-group">
                             <label style="font-size:0.85em;font-weight:500;">Kepala Sekolah</label>
                             <input type="text" class="form-control" id="setKepsek" placeholder="Nama Kepala Sekolah" style="width:100%;">
@@ -935,7 +954,7 @@
                         </div>
                     </div>
                     <h3 style="font-size:1em;color:#1a73e8;margin-bottom:12px;">🏷️ Logo Aplikasi</h3>
-                    <div style="display:flex;gap:20px;align-items:center;margin-bottom:20px;padding:14px;background:#f5f8ff;border-radius:10px;border:1px solid #d0e0ff;">
+                    <div class="logo-row" style="display:flex;flex-wrap:wrap;gap:20px;align-items:center;margin-bottom:20px;padding:14px;background:#f5f8ff;border-radius:10px;border:1px solid #d0e0ff;">
                         <div style="width:90px;height:90px;border:2px dashed #90a4ae;border-radius:12px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:white;flex-shrink:0;">
                             <img id="logoPreview" src="" alt="Logo" style="max-width:100%;max-height:100%;display:none;">
                             <span id="logoPreviewDefault" style="font-size:2.5em;">📚</span>
@@ -954,7 +973,7 @@
                     <h3 style="font-size:1em;color:#1a73e8;margin-bottom:12px;">👩‍🏫 Wali Kelas Per Kelas</h3>
                     <div style="margin-bottom:20px;padding:14px;background:#fff8f0;border-radius:10px;border:1px solid #ffe0b2;">
                         <small style="color:#555;display:block;margin-bottom:10px;">Nama dan NIP wali kelas mengikuti kelasnya. Otomatis dipakai di tanda tangan laporan/ekspor sesuai kelas.</small>
-                        <table style="width:100%;border-collapse:collapse;font-size:0.9em;">
+                        <table class="rt" style="width:100%;border-collapse:collapse;font-size:0.9em;">
                             <thead>
                                 <tr>
                                     <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #ffe0b2;">Kelas</th>
@@ -963,19 +982,19 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr><td style="padding:6px 8px;font-weight:600;">Kelas 1</td><td style="padding:4px;"><input type="text" class="form-control" id="waliNama1" style="width:100%;"></td><td style="padding:4px;"><input type="text" class="form-control" id="waliNip1" style="width:100%;"></td></tr>
-                                <tr><td style="padding:6px 8px;font-weight:600;">Kelas 2</td><td style="padding:4px;"><input type="text" class="form-control" id="waliNama2" style="width:100%;"></td><td style="padding:4px;"><input type="text" class="form-control" id="waliNip2" style="width:100%;"></td></tr>
-                                <tr><td style="padding:6px 8px;font-weight:600;">Kelas 3</td><td style="padding:4px;"><input type="text" class="form-control" id="waliNama3" style="width:100%;"></td><td style="padding:4px;"><input type="text" class="form-control" id="waliNip3" style="width:100%;"></td></tr>
-                                <tr><td style="padding:6px 8px;font-weight:600;">Kelas 4</td><td style="padding:4px;"><input type="text" class="form-control" id="waliNama4" style="width:100%;"></td><td style="padding:4px;"><input type="text" class="form-control" id="waliNip4" style="width:100%;"></td></tr>
-                                <tr><td style="padding:6px 8px;font-weight:600;">Kelas 5</td><td style="padding:4px;"><input type="text" class="form-control" id="waliNama5" style="width:100%;"></td><td style="padding:4px;"><input type="text" class="form-control" id="waliNip5" style="width:100%;"></td></tr>
-                                <tr><td style="padding:6px 8px;font-weight:600;">Kelas 6</td><td style="padding:4px;"><input type="text" class="form-control" id="waliNama6" style="width:100%;"></td><td style="padding:4px;"><input type="text" class="form-control" id="waliNip6" style="width:100%;"></td></tr>
+                                <tr><td data-label="" style="padding:6px 8px;font-weight:600;">Kelas 1</td><td data-label="Nama Wali Kelas" style="padding:4px;"><input type="text" class="form-control" id="waliNama1" style="width:100%;"></td><td data-label="NIP" style="padding:4px;"><input type="text" class="form-control" id="waliNip1" style="width:100%;"></td></tr>
+                                <tr><td data-label="" style="padding:6px 8px;font-weight:600;">Kelas 2</td><td data-label="Nama Wali Kelas" style="padding:4px;"><input type="text" class="form-control" id="waliNama2" style="width:100%;"></td><td data-label="NIP" style="padding:4px;"><input type="text" class="form-control" id="waliNip2" style="width:100%;"></td></tr>
+                                <tr><td data-label="" style="padding:6px 8px;font-weight:600;">Kelas 3</td><td data-label="Nama Wali Kelas" style="padding:4px;"><input type="text" class="form-control" id="waliNama3" style="width:100%;"></td><td data-label="NIP" style="padding:4px;"><input type="text" class="form-control" id="waliNip3" style="width:100%;"></td></tr>
+                                <tr><td data-label="" style="padding:6px 8px;font-weight:600;">Kelas 4</td><td data-label="Nama Wali Kelas" style="padding:4px;"><input type="text" class="form-control" id="waliNama4" style="width:100%;"></td><td data-label="NIP" style="padding:4px;"><input type="text" class="form-control" id="waliNip4" style="width:100%;"></td></tr>
+                                <tr><td data-label="" style="padding:6px 8px;font-weight:600;">Kelas 5</td><td data-label="Nama Wali Kelas" style="padding:4px;"><input type="text" class="form-control" id="waliNama5" style="width:100%;"></td><td data-label="NIP" style="padding:4px;"><input type="text" class="form-control" id="waliNip5" style="width:100%;"></td></tr>
+                                <tr><td data-label="" style="padding:6px 8px;font-weight:600;">Kelas 6</td><td data-label="Nama Wali Kelas" style="padding:4px;"><input type="text" class="form-control" id="waliNama6" style="width:100%;"></td><td data-label="NIP" style="padding:4px;"><input type="text" class="form-control" id="waliNip6" style="width:100%;"></td></tr>
                             </tbody>
                         </table>
                     </div>
                     <h3 style="font-size:1em;color:#1a73e8;margin-bottom:12px;">👨‍🏫 Guru Mata Pelajaran</h3>
                     <div style="margin-bottom:20px;padding:14px;background:#e8f0fe;border-radius:10px;border:1px solid #aecbfa;">
                         <small style="color:#555;display:block;margin-bottom:10px;">Nama dan NIP guru mata pelajaran yang mengajar di semua kelas 1–6.</small>
-                        <table style="width:100%;border-collapse:collapse;font-size:0.9em;">
+                        <table class="rt" style="width:100%;border-collapse:collapse;font-size:0.9em;">
                             <thead>
                                 <tr>
                                     <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #aecbfa;">Guru</th>
@@ -984,15 +1003,15 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr><td style="padding:6px 8px;font-weight:600;">🕌 Guru Agama Islam</td><td style="padding:4px;"><input type="text" class="form-control" id="agamaNama" style="width:100%;"></td><td style="padding:4px;"><input type="text" class="form-control" id="agamaNip" style="width:100%;"></td></tr>
-                                <tr><td style="padding:6px 8px;font-weight:600;">⚽ Guru PJOK</td><td style="padding:4px;"><input type="text" class="form-control" id="pjokNama" style="width:100%;"></td><td style="padding:4px;"><input type="text" class="form-control" id="pjokNip" style="width:100%;"></td></tr>
+                                <tr><td data-label="" style="padding:6px 8px;font-weight:600;">🕌 Guru Agama Islam</td><td data-label="Nama" style="padding:4px;"><input type="text" class="form-control" id="agamaNama" style="width:100%;"></td><td data-label="NIP" style="padding:4px;"><input type="text" class="form-control" id="agamaNip" style="width:100%;"></td></tr>
+                                <tr><td data-label="" style="padding:6px 8px;font-weight:600;">⚽ Guru PJOK</td><td data-label="Nama" style="padding:4px;"><input type="text" class="form-control" id="pjokNama" style="width:100%;"></td><td data-label="NIP" style="padding:4px;"><input type="text" class="form-control" id="pjokNip" style="width:100%;"></td></tr>
                             </tbody>
                         </table>
                     </div>
                     <h3 style="font-size:1em;color:#1a73e8;margin-bottom:12px;">🔐 Akun Login</h3>
                     <div style="margin-bottom:20px;padding:14px;background:#f3f4ff;border-radius:10px;border:1px solid #c5cae9;">
                         <small style="color:#555;display:block;margin-bottom:10px;">Admin bisa mengakses semua kelas. Guru kelas hanya bisa melihat & mengelola data kelasnya sendiri. Username/password default: admin / admin123 dan kelas1–6 / kelas1–6.</small>
-                        <table style="width:100%;border-collapse:collapse;font-size:0.9em;">
+                        <table class="rt" style="width:100%;border-collapse:collapse;font-size:0.9em;">
                             <thead>
                                 <tr>
                                     <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #c5cae9;">Akun</th>
@@ -1001,15 +1020,15 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr><td style="padding:6px 8px;font-weight:600;">👑 Administrator</td><td style="padding:4px;"><input type="text" class="form-control" id="userAdmin" style="width:100%;"></td><td style="padding:4px;"><div class="pass-wrap"><input type="password" class="form-control" id="passAdmin"><button type="button" class="pass-toggle" onclick="togglePass('passAdmin', this)" title="Lihat/sembunyikan">👁</button></div></td></tr>
-                                <tr><td style="padding:6px 8px;">Kelas 1</td><td style="padding:4px;"><input type="text" class="form-control" id="user1" style="width:100%;"></td><td style="padding:4px;"><div class="pass-wrap"><input type="password" class="form-control" id="pass1"><button type="button" class="pass-toggle" onclick="togglePass('pass1', this)" title="Lihat/sembunyikan">👁</button></div></td></tr>
-                                <tr><td style="padding:6px 8px;">Kelas 2</td><td style="padding:4px;"><input type="text" class="form-control" id="user2" style="width:100%;"></td><td style="padding:4px;"><div class="pass-wrap"><input type="password" class="form-control" id="pass2"><button type="button" class="pass-toggle" onclick="togglePass('pass2', this)" title="Lihat/sembunyikan">👁</button></div></td></tr>
-                                <tr><td style="padding:6px 8px;">Kelas 3</td><td style="padding:4px;"><input type="text" class="form-control" id="user3" style="width:100%;"></td><td style="padding:4px;"><div class="pass-wrap"><input type="password" class="form-control" id="pass3"><button type="button" class="pass-toggle" onclick="togglePass('pass3', this)" title="Lihat/sembunyikan">👁</button></div></td></tr>
-                                <tr><td style="padding:6px 8px;">Kelas 4</td><td style="padding:4px;"><input type="text" class="form-control" id="user4" style="width:100%;"></td><td style="padding:4px;"><div class="pass-wrap"><input type="password" class="form-control" id="pass4"><button type="button" class="pass-toggle" onclick="togglePass('pass4', this)" title="Lihat/sembunyikan">👁</button></div></td></tr>
-                                <tr><td style="padding:6px 8px;">Kelas 5</td><td style="padding:4px;"><input type="text" class="form-control" id="user5" style="width:100%;"></td><td style="padding:4px;"><div class="pass-wrap"><input type="password" class="form-control" id="pass5"><button type="button" class="pass-toggle" onclick="togglePass('pass5', this)" title="Lihat/sembunyikan">👁</button></div></td></tr>
-                                <tr><td style="padding:6px 8px;">Kelas 6</td><td style="padding:4px;"><input type="text" class="form-control" id="user6" style="width:100%;"></td><td style="padding:4px;"><div class="pass-wrap"><input type="password" class="form-control" id="pass6"><button type="button" class="pass-toggle" onclick="togglePass('pass6', this)" title="Lihat/sembunyikan">👁</button></div></td></tr>
-                                <tr><td style="padding:6px 8px;">🕌 Guru Agama Islam</td><td style="padding:4px;"><input type="text" class="form-control" id="userAgama" style="width:100%;"></td><td style="padding:4px;"><div class="pass-wrap"><input type="password" class="form-control" id="passAgama"><button type="button" class="pass-toggle" onclick="togglePass('passAgama', this)" title="Lihat/sembunyikan">👁</button></div></td></tr>
-                                <tr><td style="padding:6px 8px;">⚽ Guru PJOK</td><td style="padding:4px;"><input type="text" class="form-control" id="userPjok" style="width:100%;"></td><td style="padding:4px;"><div class="pass-wrap"><input type="password" class="form-control" id="passPjok"><button type="button" class="pass-toggle" onclick="togglePass('passPjok', this)" title="Lihat/sembunyikan">👁</button></div></td></tr>
+                                <tr><td data-label="" style="padding:6px 8px;font-weight:600;">👑 Administrator</td><td data-label="Username" style="padding:4px;"><input type="text" class="form-control" id="userAdmin" style="width:100%;"></td><td data-label="Password" style="padding:4px;"><div class="pass-wrap"><input type="password" class="form-control" id="passAdmin"><button type="button" class="pass-toggle" onclick="togglePass('passAdmin', this)" title="Lihat/sembunyikan">👁</button></div></td></tr>
+                                <tr><td data-label="" style="padding:6px 8px;">Kelas 1</td><td data-label="Username" style="padding:4px;"><input type="text" class="form-control" id="user1" style="width:100%;"></td><td data-label="Password" style="padding:4px;"><div class="pass-wrap"><input type="password" class="form-control" id="pass1"><button type="button" class="pass-toggle" onclick="togglePass('pass1', this)" title="Lihat/sembunyikan">👁</button></div></td></tr>
+                                <tr><td data-label="" style="padding:6px 8px;">Kelas 2</td><td data-label="Username" style="padding:4px;"><input type="text" class="form-control" id="user2" style="width:100%;"></td><td data-label="Password" style="padding:4px;"><div class="pass-wrap"><input type="password" class="form-control" id="pass2"><button type="button" class="pass-toggle" onclick="togglePass('pass2', this)" title="Lihat/sembunyikan">👁</button></div></td></tr>
+                                <tr><td data-label="" style="padding:6px 8px;">Kelas 3</td><td data-label="Username" style="padding:4px;"><input type="text" class="form-control" id="user3" style="width:100%;"></td><td data-label="Password" style="padding:4px;"><div class="pass-wrap"><input type="password" class="form-control" id="pass3"><button type="button" class="pass-toggle" onclick="togglePass('pass3', this)" title="Lihat/sembunyikan">👁</button></div></td></tr>
+                                <tr><td data-label="" style="padding:6px 8px;">Kelas 4</td><td data-label="Username" style="padding:4px;"><input type="text" class="form-control" id="user4" style="width:100%;"></td><td data-label="Password" style="padding:4px;"><div class="pass-wrap"><input type="password" class="form-control" id="pass4"><button type="button" class="pass-toggle" onclick="togglePass('pass4', this)" title="Lihat/sembunyikan">👁</button></div></td></tr>
+                                <tr><td data-label="" style="padding:6px 8px;">Kelas 5</td><td data-label="Username" style="padding:4px;"><input type="text" class="form-control" id="user5" style="width:100%;"></td><td data-label="Password" style="padding:4px;"><div class="pass-wrap"><input type="password" class="form-control" id="pass5"><button type="button" class="pass-toggle" onclick="togglePass('pass5', this)" title="Lihat/sembunyikan">👁</button></div></td></tr>
+                                <tr><td data-label="" style="padding:6px 8px;">Kelas 6</td><td data-label="Username" style="padding:4px;"><input type="text" class="form-control" id="user6" style="width:100%;"></td><td data-label="Password" style="padding:4px;"><div class="pass-wrap"><input type="password" class="form-control" id="pass6"><button type="button" class="pass-toggle" onclick="togglePass('pass6', this)" title="Lihat/sembunyikan">👁</button></div></td></tr>
+                                <tr><td data-label="" style="padding:6px 8px;">🕌 Guru Agama Islam</td><td data-label="Username" style="padding:4px;"><input type="text" class="form-control" id="userAgama" style="width:100%;"></td><td data-label="Password" style="padding:4px;"><div class="pass-wrap"><input type="password" class="form-control" id="passAgama"><button type="button" class="pass-toggle" onclick="togglePass('passAgama', this)" title="Lihat/sembunyikan">👁</button></div></td></tr>
+                                <tr><td data-label="" style="padding:6px 8px;">⚽ Guru PJOK</td><td data-label="Username" style="padding:4px;"><input type="text" class="form-control" id="userPjok" style="width:100%;"></td><td data-label="Password" style="padding:4px;"><div class="pass-wrap"><input type="password" class="form-control" id="passPjok"><button type="button" class="pass-toggle" onclick="togglePass('passPjok', this)" title="Lihat/sembunyikan">👁</button></div></td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -1880,15 +1899,15 @@
         } else {
             tbody.innerHTML = filtered.map((s, i) => `
                 <tr>
-                    <td style="text-align:center;">${i + 1}</td>
-                    <td>${s.nisn}</td>
-                    <td>${s.nama}</td>
-                    <td>${s.jk}</td>
-                    <td>${s.kelas}</td>
-                    <td>${s.tempatLahir}</td>
-                    <td>${s.tglLahir}</td>
-                    <td>${s.alamat}</td>
-                    <td>${s.noHP}</td>
+                    <td data-label="No">${i + 1}</td>
+                    <td data-label="NISN">${s.nisn}</td>
+                    <td data-label="Nama Lengkap">${s.nama}</td>
+                    <td data-label="JK">${s.jk}</td>
+                    <td data-label="Kelas">${s.kelas}</td>
+                    <td data-label="Tempat Lahir">${s.tempatLahir}</td>
+                    <td data-label="Tanggal Lahir">${s.tglLahir}</td>
+                    <td data-label="Alamat">${s.alamat}</td>
+                    <td data-label="No. Ortu">${s.noHP}</td>
                 </tr>
             `).join('');
         }
@@ -1910,18 +1929,18 @@
         } else {
             tbody.innerHTML = filtered.map((s, i) => `
                 <tr>
-                    <td><input type="checkbox" class="cek-siswa" data-nisn="${s.nisn}"></td>
-                    <td>${i + 1}</td>
-                    <td>${s.nisn}</td>
-                    <td>${s.nama}</td>
-                    <td>${s.jk}</td>
-                    <td>${s.kelas}</td>
-                    <td>${s.tempatLahir}</td>
-                    <td>${s.tglLahir}</td>
-                    <td>${s.alamat}</td>
-                    <td>${s.noHP}</td>
-                    <td>
-                        <button class="btn btn-warning btn-sm" onclick="editSiswa('${s.nisn}')">✏️</button>
+                    <td data-label="Pilih"><input type="checkbox" class="cek-siswa" data-nisn="${s.nisn}"></td>
+                    <td data-label="No">${i + 1}</td>
+                    <td data-label="NISN">${s.nisn}</td>
+                    <td data-label="Nama Lengkap">${s.nama}</td>
+                    <td data-label="JK">${s.jk}</td>
+                    <td data-label="Kelas">${s.kelas}</td>
+                    <td data-label="Tempat Lahir">${s.tempatLahir}</td>
+                    <td data-label="Tanggal Lahir">${s.tglLahir}</td>
+                    <td data-label="Alamat">${s.alamat}</td>
+                    <td data-label="No. Ortu">${s.noHP}</td>
+                    <td data-label="Aksi">
+                        <button class="btn btn-warning btn-sm" onclick="editSiswa('${s.nisn}')">✏️ Edit</button>
                     </td>
                 </tr>
             `).join('');
@@ -2108,11 +2127,11 @@
             
             return `
                 <tr>
-                    <td>${i + 1}</td>
-                    <td>${s.nisn}</td>
-                    <td>${s.nama}</td>
-                    <td>${s.kelas}</td>
-                    <td>
+                    <td data-label="No">${i + 1}</td>
+                    <td data-label="NISN">${s.nisn}</td>
+                    <td data-label="Nama">${s.nama}</td>
+                    <td data-label="Kelas">${s.kelas}</td>
+                    <td data-label="Status">
                         <select class="inline-select absensi-status" data-nisn="${s.nisn}">
                             <option value="Hadir" ${status === 'Hadir' ? 'selected' : ''}>Hadir</option>
                             <option value="Sakit" ${status === 'Sakit' ? 'selected' : ''}>Sakit</option>
@@ -2121,7 +2140,7 @@
                             <option value="Libur" ${status === 'Libur' ? 'selected' : ''}>Libur</option>
                         </select>
                     </td>
-                    <td>
+                    <td data-label="Keterangan">
                         <input type="text" class="inline-input absensi-ket" data-nisn="${s.nisn}" value="${keterangan}" placeholder="Keterangan (opsional)">
                     </td>
                 </tr>
@@ -2723,6 +2742,7 @@
     // ===== REKAP NILAI =====
     function renderRekapNilai() {
         document.getElementById('rekapNilaiTitle').textContent = 'Rekap Nilai Siswa';
+        document.querySelector('#page-rekapNilai table').classList.add('rt');
         const mapel = document.getElementById('rekapMapel').value;
         const semester = document.getElementById('rekapSemesterNilai').value;
         const kelas = getKelasFilter('rekapKelasNilai');
@@ -2761,26 +2781,26 @@
                 const rowBg = isBelowKKM ? 'background:#fff0f0;' : '';
                 let uhCells = '';
                 for (let j = 0; j < maxUH; j++) {
-                    uhCells += `<td>${uh[j] !== undefined ? uh[j] : '-'}</td>`;
+                    uhCells += `<td data-label="UH ${j + 1}">${uh[j] !== undefined ? uh[j] : '-'}</td>`;
                 }
                 let prCells = '';
                 for (let j = 0; j < maxPR; j++) {
-                    prCells += `<td>${pr[j] !== undefined ? pr[j] : '-'}</td>`;
+                    prCells += `<td data-label="PR ${j + 1}">${pr[j] !== undefined ? pr[j] : '-'}</td>`;
                 }
                 return `
                     <tr style="${rowBg}">
-                        <td>${i + 1}</td>
-                        <td>${n.nisn}</td>
-                        <td>${getNamaSiswa(n.nisn)}</td>
-                        <td>${getKelasSiswa(n.nisn)}</td>
-                        <td>${n.mapel}</td>
-                        <td>${n.semester}</td>
+                        <td data-label="No">${i + 1}</td>
+                        <td data-label="NISN">${n.nisn}</td>
+                        <td data-label="Nama Siswa">${getNamaSiswa(n.nisn)}</td>
+                        <td data-label="Kelas">${getKelasSiswa(n.nisn)}</td>
+                        <td data-label="Mata Pelajaran">${n.mapel}</td>
+                        <td data-label="Semester">${n.semester}</td>
                         ${uhCells}
                         ${prCells}
-                        <td>${n.uts}</td>
-                        <td>${n.uas}</td>
-                        <td style="font-weight:bold;${isBelowKKM ? 'color:#c62828;' : ''}">${avg.toFixed(1)}${isBelowKKM ? ' ⚠️' : ''}</td>
-                        <td><span class="badge badge-${g.cls}">${g.grade}</span></td>
+                        <td data-label="UTS">${n.uts}</td>
+                        <td data-label="UAS">${n.uas}</td>
+                        <td data-label="Rata-rata" style="font-weight:bold;${isBelowKKM ? 'color:#c62828;' : ''}">${avg.toFixed(1)}${isBelowKKM ? ' ⚠️' : ''}</td>
+                        <td data-label="Grade"><span class="badge badge-${g.cls}">${g.grade}</span></td>
                     </tr>
                 `;
             }).join('');
@@ -2805,6 +2825,7 @@
 
     function renderRekapSemesterNilai() {
         document.getElementById('rekapNilaiTitle').textContent = 'Rekap Nilai Per Semester';
+        document.querySelector('#page-rekapNilai table').classList.remove('rt');
         const semester = document.getElementById('rekapSemesterNilai').value;
         const kelas = getKelasFilter('rekapKelasNilai');
         const siswa = getData('siswa');
@@ -2942,10 +2963,10 @@
             const esc = function(v) { return (v == null ? '' : String(v)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
             rows += `
                 <tr>
-                    <td style="text-align:center;font-weight:bold;">${i}</td>
-                    <td style="padding:4px;"><input type="text" class="form-control" id="jadMapel_${i}" value="${esc(j && j.mapel)}" placeholder="—" style="width:100%;"></td>
-                    <td style="padding:4px;"><input type="text" class="form-control" id="jadGuru_${i}" value="${esc(j && j.guru)}" placeholder="—" style="width:100%;"></td>
-                    <td style="padding:4px;"><input type="text" class="form-control" id="jadJam_${i}" value="${esc(j && j.jam)}" placeholder="07:00 - 07:45" style="width:100%;"></td>
+                    <td data-label="Jam Ke-" style="text-align:center;font-weight:bold;">${i}</td>
+                    <td data-label="Mata Pelajaran" style="padding:4px;"><input type="text" class="form-control" id="jadMapel_${i}" value="${esc(j && j.mapel)}" placeholder="—" style="width:100%;"></td>
+                    <td data-label="Guru" style="padding:4px;"><input type="text" class="form-control" id="jadGuru_${i}" value="${esc(j && j.guru)}" placeholder="—" style="width:100%;"></td>
+                    <td data-label="Jam Pelajaran" style="padding:4px;"><input type="text" class="form-control" id="jadJam_${i}" value="${esc(j && j.jam)}" placeholder="07:00 - 07:45" style="width:100%;"></td>
                 </tr>`;
         }
         tbody.innerHTML = rows;
@@ -3889,7 +3910,7 @@
 
     async function init() {
         const vEl = document.getElementById('appVersion');
-        if (vEl) vEl.textContent = 'v2026.08.17';
+        if (vEl) vEl.textContent = 'v2026.08.18';
         await _loadFromServer();
         document.getElementById('loadingOverlay').style.display = 'none';
         checkLogin();
