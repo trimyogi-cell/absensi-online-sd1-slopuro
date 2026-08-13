@@ -366,7 +366,7 @@
                 <div class="card-header">
                     <h2>📅 Pilih Hari & Kelas</h2>
                     <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-                        <select id="filterHariJadwal" class="form-control" style="width:auto;" onchange="renderJadwal()">
+                        <select id="filterHariJadwal" class="form-control" style="width:auto;" onchange="onHariJadwalChange()">
                             <option value="Senin">Senin</option>
                             <option value="Selasa">Selasa</option>
                             <option value="Rabu">Rabu</option>
@@ -1427,6 +1427,14 @@
     }
     function generateId() { return Date.now().toString(36) + Math.random().toString(36).substr(2, 5); }
     function getTodayStr() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+    function getDateOfDayName(dayName) {
+        const days = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+        const target = days.indexOf(dayName);
+        if (target < 0) return getTodayStr();
+        const now = new Date();
+        const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + (target - now.getDay()));
+        return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    }
 
     // ===== GOOGLE DRIVE BACKUP (cadangan di samping Supabase) =====
     function getDriveUrl() {
@@ -1735,7 +1743,7 @@
 
         var hariList = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
         var hariIni = hariList[new Date().getDay()];
-        if (hariIni !== 'Minggu') {
+        if (!_hariJadwalUserPick && hariIni !== 'Minggu') {
             document.getElementById('filterHariJadwal').value = hariIni;
         }
         renderWaliKelas();
@@ -1752,7 +1760,8 @@
                 absensi = absensi.filter(a => nisns.has(a.nisn));
             }
         }
-        const today = getTodayStr();
+        const today = getDateOfDayName(document.getElementById('filterHariJadwal') ? document.getElementById('filterHariJadwal').value : '');
+        const hariSel = document.getElementById('filterHariJadwal') ? document.getElementById('filterHariJadwal').value : '';
         const totalMode = isAdminUser() && document.getElementById('filterTotalAbsensi') ? document.getElementById('filterTotalAbsensi').value : 'jadwal';
         const kelasJadwal = (totalMode === 'semua') ? '' : getKelasFilter('filterKelasJadwal');
         const labelKelas = document.getElementById('dashboardAbsensiKelas');
@@ -1762,9 +1771,9 @@
             const nisnsKelas = new Set(siswa.filter(s => String(s.kelas) === kelasJadwal).map(s => s.nisn));
             siswas = siswa.filter(s => nisnsKelas.has(s.nisn));
             absenHariIni = absenHariIni.filter(a => nisnsKelas.has(a.nisn));
-            if (labelKelas) labelKelas.textContent = '— Kelas ' + kelasJadwal;
+            if (labelKelas) labelKelas.textContent = '— ' + hariSel + ' · Kelas ' + kelasJadwal;
         } else if (labelKelas) {
-            labelKelas.textContent = totalMode === 'semua' ? '— Semua Kelas 1–6' : '';
+            labelKelas.textContent = '— ' + hariSel + (totalMode === 'semua' ? ' · Semua Kelas 1–6' : '');
         }
         document.getElementById('totalSiswa').textContent = siswas.length;
         document.getElementById('totalHadir').textContent = absenHariIni.filter(a => a.status === 'Hadir').length;
@@ -1774,7 +1783,7 @@
 
         const tbody = document.getElementById('dashboardAbsensi');
         if (absenHariIni.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;padding:30px;">Belum ada data absensi untuk kelas ini hari ini</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;padding:30px;">Belum ada data absensi untuk pilihan hari & kelas ini</td></tr>';
         } else {
             tbody.innerHTML = absenHariIni.map((a, i) => `
                 <tr>
@@ -1794,6 +1803,12 @@
     }
 
     function onKelasJadwalChange() {
+        renderJadwal();
+        renderDashboardAbsensi();
+    }
+
+    function onHariJadwalChange() {
+        _hariJadwalUserPick = true;
         renderJadwal();
         renderDashboardAbsensi();
     }
@@ -3380,6 +3395,7 @@
     let _role = '';
     let _roleKelas = '';
     let _dataSig = '';
+    let _hariJadwalUserPick = false;
 
     function getRoleKelas() { return _roleKelas; }
     function isAdminUser() { return _role === 'admin'; }
@@ -3843,7 +3859,7 @@
 
     async function init() {
         const vEl = document.getElementById('appVersion');
-        if (vEl) vEl.textContent = 'v2026.08.14';
+        if (vEl) vEl.textContent = 'v2026.08.15';
         await _loadFromServer();
         document.getElementById('loadingOverlay').style.display = 'none';
         checkLogin();
