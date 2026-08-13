@@ -251,6 +251,12 @@
             #btnSyncNow span { display: none; }
             .page { overflow-y: auto; -webkit-overflow-scrolling: touch; }
             .card { padding: 15px !important; }
+            #page-dashboard table { width: 100%; }
+            #page-dashboard table th { padding: 8px 8px; font-size: 0.72em; white-space: nowrap; }
+            #page-dashboard table td { padding: 7px 8px; font-size: 0.78em; }
+            #page-dashboard .dash-hide-sm { display: none; }
+            #page-dashboard .card-header h2 { font-size: 1em; }
+            #page-dashboard .card-header h2 span { display: block; font-size: 0.8em; margin-top: 2px; }
         }
     </style>
 </head>
@@ -427,7 +433,7 @@
                     <div style="overflow-x:auto;">
                     <table>
                         <thead>
-                            <tr><th style="width:60px;text-align:center;">Jam Ke-</th><th>Mata Pelajaran</th><th>Guru</th><th>Jam Pelajaran</th></tr>
+                            <tr><th style="width:60px;text-align:center;">Jam Ke-</th><th>Mata Pelajaran</th><th>Guru</th><th class="dash-hide-sm">Jam Pelajaran</th></tr>
                         </thead>
                         <tbody id="tabelJadwal"></tbody>
                     </table>
@@ -442,7 +448,7 @@
                     <div style="overflow-x:auto;">
                     <table>
                         <thead>
-                            <tr><th>No</th><th>NISN</th><th>Nama Siswa</th><th>Kelas</th><th>Status</th><th>Keterangan</th></tr>
+                            <tr><th>No</th><th class="dash-hide-sm">NISN</th><th>Nama Siswa</th><th>Kelas</th><th>Status</th><th class="dash-hide-sm">Keterangan</th></tr>
                         </thead>
                         <tbody id="dashboardAbsensi"></tbody>
                     </table>
@@ -1811,11 +1817,11 @@
             tbody.innerHTML = absenHariIni.map((a, i) => `
                 <tr>
                     <td>${i + 1}</td>
-                    <td>${a.nisn}</td>
+                    <td class="dash-hide-sm">${a.nisn}</td>
                     <td>${getNamaSiswa(a.nisn)}</td>
                     <td>${getKelasSiswa(a.nisn)}</td>
                     <td>${getBadge(a.status)}</td>
-                    <td>${a.keterangan || '-'}</td>
+                    <td class="dash-hide-sm">${a.keterangan || '-'}</td>
                 </tr>
             `).join('');
         }
@@ -2917,7 +2923,7 @@
                 <td style="text-align:center;font-weight:bold;">${j.jamke}</td>
                 <td>${j.mapel}</td>
                 <td>${j.guru}</td>
-                <td>${j.jam}</td>
+                <td class="dash-hide-sm">${j.jam}</td>
             </tr>
         `).join('');
     }
@@ -3883,7 +3889,7 @@
 
     async function init() {
         const vEl = document.getElementById('appVersion');
-        if (vEl) vEl.textContent = 'v2026.08.16';
+        if (vEl) vEl.textContent = 'v2026.08.17';
         await _loadFromServer();
         document.getElementById('loadingOverlay').style.display = 'none';
         checkLogin();
