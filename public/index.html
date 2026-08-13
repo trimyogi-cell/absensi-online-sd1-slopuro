@@ -356,6 +356,9 @@
         <div class="menu-item" onclick="showPage('absensi', this)">
             <span class="icon">📋</span> Absensi
         </div>
+        <div class="menu-item" onclick="showPage('scanQR', this)">
+            <span class="icon">📷</span> Scan QR
+        </div>
         <div class="menu-item" onclick="showPage('nilai', this)">
             <span class="icon">📝</span> Nilai Pelajaran
         </div>
@@ -609,6 +612,37 @@
                         <tbody id="tabelAbsensi"></tbody>
                     </table>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scan QR -->
+        <div class="page" id="page-scanQR">
+            <div class="card">
+                <div class="card-header">
+                    <h2>📷 Scan Kartu QR Absensi</h2>
+                    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                        <input type="date" id="scanTglAbsen" class="form-control" style="width:auto;" onchange="scanTglChange()">
+                        <select id="filterKelasScan" class="form-control" style="width:auto;" onchange="scanKelasChange()">
+                            <option value="">Semua Kelas</option>
+                            <option value="1">Kelas 1</option>
+                            <option value="2">Kelas 2</option>
+                            <option value="3">Kelas 3</option>
+                            <option value="4">Kelas 4</option>
+                            <option value="5">Kelas 5</option>
+                            <option value="6">Kelas 6</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="mulaiScanQR()">📷 Mulai Scan</button>
+                        <button class="btn btn-danger" onclick="hentikanQr()">⏹️ Berhenti</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div style="margin-bottom:10px; font-size:0.85em; color:#555;">
+                        Tanggal absen: <strong id="scanTglInfoPage"></strong> — arahkan kamera ke kartu QR siswa. Scan otomatis menandai <strong>Hadir</strong>. Setiap siswa hanya bisa absen <strong>1 kali per hari</strong> (ubah lewat aplikasi).
+                    </div>
+                    <div id="qr-reader-page" style="width:100%;"></div>
+                    <div id="scanStatusPage" class="qr-scan-status" style="color:#666;">Klik "Mulai Scan" untuk mengaktifkan kamera.</div>
+                    <div id="scanListPage" class="qr-scan-list"></div>
                 </div>
             </div>
         </div>
@@ -1662,6 +1696,7 @@
         document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
         document.getElementById('page-' + page).classList.add('active');
         if (el) el.classList.add('active');
+        if (page !== 'scanQR' && typeof hentikanQr === 'function') hentikanQr();
         refreshPage(page);
         if (window.innerWidth <= 768) {
             document.querySelector('.sidebar').classList.remove('show');
@@ -1689,6 +1724,12 @@
                     document.getElementById('filterTglAbsensi').value = getTodayStr();
                 }
                 renderAbsensi(); 
+                break;
+            case 'scanQR':
+                if (!document.getElementById('scanTglAbsen').value) {
+                    document.getElementById('scanTglAbsen').value = getTodayStr();
+                }
+                document.getElementById('scanTglInfoPage').textContent = document.getElementById('scanTglAbsen').value;
                 break;
             case 'nilai': renderNilaiInline(); break;
             case 'rekapAbsensi':
@@ -3480,7 +3521,7 @@
 
     function lockKelasFilters() {
         if (isAdminUser() || !_roleKelas) return;
-        const ids = ['filterKelasSiswa', 'filterKelasAbsensi', 'filterKelasNilai', 'filterKelasJadwal', 'filterKelasAturJadwal', 'rekapKelasAbs', 'rekapKelasNilai'];
+        const ids = ['filterKelasSiswa', 'filterKelasAbsensi', 'filterKelasNilai', 'filterKelasJadwal', 'filterKelasAturJadwal', 'rekapKelasAbs', 'rekapKelasNilai', 'filterKelasScan'];
         ids.forEach(id => {
             const el = document.getElementById(id);
             if (el) {
@@ -3926,7 +3967,7 @@
 
     async function init() {
         const vEl = document.getElementById('appVersion');
-        if (vEl) vEl.textContent = 'v2026.08.19';
+        if (vEl) vEl.textContent = 'v2026.08.20';
         await _loadFromServer();
         document.getElementById('loadingOverlay').style.display = 'none';
         checkLogin();
@@ -3959,37 +4000,74 @@
     // ===== SCAN QR & KARTU QR =====
     let _qrScanner = null;
     let _qrLastScan = {};
+    let _qrTgl = '';
+    let _qrStatusEl = null;
+    let _qrListEl = null;
 
-    function bukaScanQR() {
-        const tgl = document.getElementById('filterTglAbsensi').value;
-        if (!tgl) { alert('Pilih tanggal absensi terlebih dahulu di halaman Absensi!'); return; }
-        document.getElementById('scanTglInfo').textContent = tgl;
-        document.getElementById('scanStatus').textContent = 'Menyiapkan kamera...';
-        document.getElementById('scanStatus').style.color = '#666';
-        document.getElementById('scanList').innerHTML = '';
-        openModal('modalScanQR');
+    function hentikanQr() {
+        if (_qrScanner) {
+            try { _qrScanner.stop().then(() => _qrScanner.clear()).catch(() => {}); } catch (e) {}
+            _qrScanner = null;
+        }
+    }
+
+    function mulaiQrReader(readerId, statusEl, listEl) {
+        _qrStatusEl = statusEl;
+        _qrListEl = listEl;
+        hentikanQr();
         if (typeof Html5Qrcode === 'undefined') {
-            document.getElementById('scanStatus').textContent = '❌ Library pemindai belum dimuat. Periksa koneksi internet.';
-            document.getElementById('scanStatus').style.color = '#c62828';
+            statusEl.textContent = '❌ Library pemindai belum dimuat. Periksa koneksi internet.';
+            statusEl.style.color = '#c62828';
             return;
         }
-        _qrScanner = new Html5Qrcode('qr-reader');
+        statusEl.textContent = 'Menyiapkan kamera...';
+        statusEl.style.color = '#666';
+        listEl.innerHTML = '';
+        _qrScanner = new Html5Qrcode(readerId);
         _qrScanner.start(
             { facingMode: 'environment' },
             { fps: 10, qrbox: { width: 220, height: 220 } },
             onQRDecoded,
             () => {}
         ).catch(err => {
-            document.getElementById('scanStatus').textContent = '❌ Kamera tidak bisa dibuka: ' + err;
-            document.getElementById('scanStatus').style.color = '#c62828';
+            statusEl.textContent = '❌ Kamera tidak bisa dibuka: ' + err;
+            statusEl.style.color = '#c62828';
         });
     }
 
-    function tutupScanQR() {
-        if (_qrScanner) {
-            try { _qrScanner.stop().then(() => _qrScanner.clear()).catch(() => {}); } catch (e) {}
-            _qrScanner = null;
+    function bukaScanQR() {
+        const tgl = document.getElementById('filterTglAbsensi').value;
+        if (!tgl) { alert('Pilih tanggal absensi terlebih dahulu di halaman Absensi!'); return; }
+        _qrTgl = tgl;
+        document.getElementById('scanTglInfo').textContent = tgl;
+        openModal('modalScanQR');
+        mulaiQrReader('qr-reader', document.getElementById('scanStatus'), document.getElementById('scanList'));
+    }
+
+    function mulaiScanQR() {
+        const tgl = document.getElementById('scanTglAbsen').value;
+        if (!tgl) { alert('Pilih tanggal terlebih dahulu!'); return; }
+        _qrTgl = tgl;
+        document.getElementById('scanTglInfoPage').textContent = tgl;
+        mulaiQrReader('qr-reader-page', document.getElementById('scanStatusPage'), document.getElementById('scanListPage'));
+    }
+
+    function scanTglChange() {
+        const el = document.getElementById('scanTglInfoPage');
+        if (el) el.textContent = document.getElementById('scanTglAbsen').value || '';
+    }
+
+    function scanKelasChange() {
+        const el = document.getElementById('scanStatusPage');
+        if (el) {
+            const k = document.getElementById('filterKelasScan').value;
+            el.textContent = k ? 'Scan hanya untuk Kelas ' + k : 'Scan untuk semua kelas';
+            el.style.color = '#666';
         }
+    }
+
+    function tutupScanQR() {
+        hentikanQr();
         closeModal('modalScanQR');
     }
 
@@ -4010,7 +4088,17 @@
         if (_qrLastScan[nisn] && now - _qrLastScan[nisn] < 4000) return;
         _qrLastScan[nisn] = now;
 
-        const tgl = document.getElementById('filterTglAbsensi').value;
+        if (_roleKelas && String(siswa.kelas) !== _roleKelas) {
+            tambahScanList(siswa.nama + ' (Kelas ' + siswa.kelas + ')', '❌ Bukan siswa kelas Anda', 'err');
+            return;
+        }
+        const kelasSel = document.getElementById('filterKelasScan') ? document.getElementById('filterKelasScan').value : '';
+        if (kelasSel && String(siswa.kelas) !== kelasSel) {
+            tambahScanList(siswa.nama + ' (Kelas ' + siswa.kelas + ')', '❌ Bukan siswa Kelas ' + kelasSel, 'err');
+            return;
+        }
+
+        const tgl = _qrTgl;
         const sudahAda = getData('absensi').find(a => a.nisn === nisn && a.tanggal === tgl);
         if (sudahAda) {
             tambahScanList(siswa.nama + ' (Kelas ' + siswa.kelas + ')', '❌ Sudah absen hari ini (ubah via aplikasi)', 'err');
@@ -4018,12 +4106,12 @@
         }
 
         const jam = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-        simpanSatuAbsensi(nisn, 'Hadir', 'Scan QR ' + jam);
+        simpanSatuAbsensi(nisn, 'Hadir', 'Scan QR ' + jam, tgl);
         tambahScanList(siswa.nama + ' (Kelas ' + siswa.kelas + ')', '✅ Hadir ' + jam, 'ok');
     }
 
     function tambahScanList(nama, info, cls) {
-        const el = document.getElementById('scanList');
+        const el = _qrListEl || document.getElementById('scanList');
         if (!el) return;
         const item = document.createElement('div');
         item.className = 'qr-scan-item ' + cls;
@@ -4032,8 +4120,8 @@
         while (el.children.length > 12) el.removeChild(el.lastChild);
     }
 
-    function simpanSatuAbsensi(nisn, status, keterangan) {
-        const tgl = document.getElementById('filterTglAbsensi').value;
+    function simpanSatuAbsensi(nisn, status, keterangan, tgl) {
+        if (!tgl) tgl = document.getElementById('filterTglAbsensi').value;
         if (!tgl) return false;
         let absensi = getData('absensi');
         const idx = absensi.findIndex(a => a.nisn === nisn && a.tanggal === tgl);
