@@ -1444,6 +1444,8 @@
 
     // ===== GOOGLE DRIVE BACKUP (cadangan di samping Supabase) =====
     function getDriveUrl() {
+        const s = getPengaturan();
+        if (s && s.driveUrl) return s.driveUrl;
         const saved = localStorage.getItem('driveUrl');
         if (saved) return saved;
         if (typeof INJECTED_APP_URL === 'string' && INJECTED_APP_URL && INJECTED_APP_URL.indexOf('script.google') >= 0) return INJECTED_APP_URL;
@@ -1456,6 +1458,15 @@
     function loadDriveUrlIntoForm() {
         const el = document.getElementById('setDriveUrl');
         if (el) el.value = getDriveUrl();
+        const s = getPengaturan();
+        if (s && !s.driveUrl) {
+            const local = localStorage.getItem('driveUrl');
+            if (local) {
+                s.driveUrl = local;
+                _memStore['pengaturanSekolah'] = JSON.stringify(s);
+                _syncToServer('pengaturanSekolah');
+            }
+        }
         if (getDriveUrl()) setDriveStatus('☁️ Terhubung - Auto-backup aktif', '#0f9d58');
         else setDriveStatus('Status: Belum Terhubung', '#666');
     }
@@ -1463,8 +1474,12 @@
         const v = document.getElementById('setDriveUrl').value.trim();
         if (!v) { alert('Masukkan URL Web App Google Apps Script terlebih dahulu!'); return; }
         localStorage.setItem('driveUrl', v);
+        const s = getPengaturan();
+        s.driveUrl = v;
+        _memStore['pengaturanSekolah'] = JSON.stringify(s);
+        _syncToServer('pengaturanSekolah');
         loadDriveUrlIntoForm();
-        alert('URL Drive disimpan! Data akan otomatis di-cadangkan ke Google Drive.');
+        alert('URL Drive disimpan! Berlaku untuk semua perangkat & data otomatis di-cadangkan ke Google Drive.');
         backupToDrive();
     }
     function collectKKM() {
@@ -3554,7 +3569,8 @@
             waliKelas: waliKelasMap['3'].nama,
             nipWali: waliKelasMap['3'].nip,
             kelasWali: '3',
-            logo: existingP.logo || ''
+            logo: existingP.logo || '',
+            driveUrl: existingP.driveUrl || ''
         };
         const accounts = [
             { role: 'admin', user: document.getElementById('userAdmin').value.trim(), pass: document.getElementById('passAdmin').value },
