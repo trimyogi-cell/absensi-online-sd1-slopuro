@@ -306,6 +306,7 @@
         </div>
     </div>
     <div style="display:flex;align-items:center;gap:15px;">
+        <span id="appVersion" style="font-size:0.7em;color:rgba(255,255,255,0.7);"></span>
         <div id="syncStatus" style="display:flex;align-items:center;gap:6px;font-size:0.75em;color:rgba(255,255,255,0.9);background:rgba(255,255,255,0.15);padding:4px 10px;border-radius:20px;">
             <span id="syncDot" style="width:8px;height:8px;border-radius:50%;background:#4caf50;"></span>
             <span id="syncText">Online</span>
@@ -3836,6 +3837,8 @@
     }
 
     async function init() {
+        const vEl = document.getElementById('appVersion');
+        if (vEl) vEl.textContent = 'v2026.08.13';
         await _loadFromServer();
         document.getElementById('loadingOverlay').style.display = 'none';
         checkLogin();
