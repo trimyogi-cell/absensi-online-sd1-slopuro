@@ -908,6 +908,20 @@
                             <input type="password" class="form-control" id="setPassword" placeholder="Password" style="width:100%;">
                         </div>
                     </div>
+                    <h3 style="font-size:1em;color:#0f9d58;margin-bottom:12px;">☁️ Backup Google Drive (Cadangan Otomatis)</h3>
+                    <div style="margin-bottom:20px;padding:14px;background:#f1f8e9;border-radius:10px;border:1px solid #c5e1a5;">
+                        <div class="form-group" style="margin-bottom:10px;">
+                            <label style="font-size:0.85em;font-weight:500;">URL Web App Google Apps Script</label>
+                            <input type="text" class="form-control" id="setDriveUrl" placeholder="https://script.google.com/macros/s/.../exec" style="width:100%;font-size:0.8em;">
+                            <small style="color:#666;">Data tetap disimpan di Supabase + otomatis di-cadangkan ke Google Drive. Lihat PANDUAN-SETUP-DRIVE.md untuk membuat URL ini.</small>
+                        </div>
+                        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                            <button class="btn" style="background:#0f9d58;color:#fff;" onclick="simpanDriveUrl()">💾 Simpan URL</button>
+                            <button class="btn" style="background:#1a73e8;color:#fff;" onclick="backupToDrive()">⬆️ Backup Sekarang</button>
+                            <button class="btn" style="background:#ff9800;color:#fff;" onclick="restoreFromDrive()">⬇️ Pulihkan dari Drive</button>
+                            <span id="driveStatus" style="font-size:0.8em;font-weight:600;">Status: Belum Terhubung</span>
+                        </div>
+                    </div>
                     <button class="btn btn-primary" onclick="simpanPengaturan()">💾 Simpan Semua Pengaturan</button>
                 </div>
             </div>
@@ -1253,10 +1267,125 @@
     function getData(key) { return JSON.parse(_memStore[key] || '[]'); }
     function setData(key, data) {
       _memStore[key] = JSON.stringify(data);
-      if (key !== 'loggedIn' && key !== 'authUser') _syncToServer(key);
+      if (key !== 'loggedIn' && key !== 'authUser') {
+        _syncToServer(key);
+        scheduleDriveBackup();
+      }
     }
     function generateId() { return Date.now().toString(36) + Math.random().toString(36).substr(2, 5); }
     function getTodayStr() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+
+    // ===== GOOGLE DRIVE BACKUP (cadangan di samping Supabase) =====
+    function getDriveUrl() {
+        const saved = localStorage.getItem('driveUrl');
+        if (saved) return saved;
+        if (typeof INJECTED_APP_URL === 'string' && INJECTED_APP_URL && INJECTED_APP_URL.indexOf('script.google') >= 0) return INJECTED_APP_URL;
+        return '';
+    }
+    function setDriveStatus(msg, color) {
+        const el = document.getElementById('driveStatus');
+        if (el) { el.textContent = msg; el.style.color = color || '#666'; }
+    }
+    function loadDriveUrlIntoForm() {
+        const el = document.getElementById('setDriveUrl');
+        if (el) el.value = getDriveUrl();
+        if (getDriveUrl()) setDriveStatus('☁️ Terhubung - Auto-backup aktif', '#0f9d58');
+        else setDriveStatus('Status: Belum Terhubung', '#666');
+    }
+    function simpanDriveUrl() {
+        const v = document.getElementById('setDriveUrl').value.trim();
+        if (!v) { alert('Masukkan URL Web App Google Apps Script terlebih dahulu!'); return; }
+        localStorage.setItem('driveUrl', v);
+        loadDriveUrlIntoForm();
+        alert('URL Drive disimpan! Data akan otomatis di-cadangkan ke Google Drive.');
+        backupToDrive();
+    }
+    function collectKKM() {
+        const kkm = {};
+        for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (k && k.indexOf('kkm_') === 0) kkm[k] = localStorage.getItem(k);
+        }
+        Object.keys(_memStore).forEach(k => {
+            if (k.indexOf('kkm_') === 0) kkm[k] = _memStore[k];
+        });
+        return kkm;
+    }
+    function getDrivePayload() {
+        const data = {};
+        const tables = ['siswa','absensi','nilai','libur','gradeSetting','pengaturanSekolah','authUser','jadwalPelajaran'];
+        tables.forEach(t => { if (_memStore[t]) data[t] = JSON.parse(_memStore[t]); });
+        data.kkm = collectKKM();
+        data.backupTs = new Date().toISOString();
+        return data;
+    }
+    function backupToDrive() {
+        const url = getDriveUrl();
+        if (!url) { setDriveStatus('⚠️ URL belum diisi', '#c62828'); alert('Masukkan URL Web App Google Apps Script di Pengaturan terlebih dahulu!'); return; }
+        setDriveStatus('⏳ Mengirim backup ke Drive...', '#ff9800');
+        const payload = getDrivePayload();
+        fetch(url, {
+            method: 'POST',
+            mode: 'cors',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify({ data: JSON.stringify(payload) })
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) setDriveStatus('✅ Backup Drive: ' + new Date().toLocaleTimeString(), '#0f9d58');
+            else setDriveStatus('❌ Gagal: ' + (res.error || ''), '#c62828');
+        })
+        .catch(err => { setDriveStatus('❌ Gagal terhubung: ' + err.message, '#c62828'); });
+    }
+    function restoreFromDrive() {
+        const url = getDriveUrl();
+        if (!url) { setDriveStatus('⚠️ URL belum diisi', '#c62828'); alert('Masukkan URL Web App Google Apps Script di Pengaturan terlebih dahulu!'); return; }
+        if (!confirm('Pulihkan data dari Google Drive?\nData di server saat ini AKAN DIGANTI dengan data backup Drive.')) return;
+        setDriveStatus('⏳ Mengunduh backup dari Drive...', '#ff9800');
+        fetch(url + (url.indexOf('?') >= 0 ? '&' : '?') + 'action=load', { method: 'GET', mode: 'cors' })
+        .then(r => r.json())
+        .then(async res => {
+            if (res.success && res.data) {
+                const d = res.data;
+                const tables = ['siswa','absensi','nilai','libur','gradeSetting','pengaturanSekolah','authUser','jadwalPelajaran'];
+                let restored = 0;
+                for (const t of tables) {
+                    if (d[t] !== undefined) {
+                        _memStore[t] = JSON.stringify(d[t]);
+                        await _sbSet(t, d[t]).catch(e => console.error('Restore ' + t + ':', e));
+                        restored++;
+                    }
+                }
+                if (d.kkm) {
+                    try {
+                        const k = d.kkm;
+                        for (const kk in k) {
+                            _memStore[kk] = k[kk];
+                            if (kk.indexOf('kkm_') === 0) {
+                                localStorage.setItem(kk, k[kk]);
+                            }
+                            _syncToServer(kk);
+                        }
+                    } catch(e) {}
+                }
+                setDriveStatus('✅ Dipulihkan dari Drive: ' + new Date().toLocaleTimeString(), '#0f9d58');
+                alert('Data berhasil dipulihkan dari Google Drive (' + restored + ' tabel)!');
+                renderDashboard(); renderSiswa(); renderAbsensi(); renderNilaiInline();
+                var ap = document.querySelector('.page.active');
+                if (ap) { var pid = ap.id.replace('page-',''); refreshPage(pid); }
+            } else {
+                setDriveStatus('❌ Gagal: ' + (res.error || 'Tidak ada data'), '#c62828');
+            }
+        })
+        .catch(err => { setDriveStatus('❌ Gagal terhubung: ' + err.message, '#c62828'); });
+    }
+    let driveBackupTimer = null;
+    function scheduleDriveBackup() {
+        const url = getDriveUrl();
+        if (!url) return;
+        clearTimeout(driveBackupTimer);
+        driveBackupTimer = setTimeout(backupToDrive, 3000);
+    }
     
     // ===== DYNAMIC UH =====
     function tambahUH() {
@@ -2996,6 +3125,7 @@
         document.getElementById('setWaliKelas').value = s.waliKelas || '';
         document.getElementById('setNipWali').value = s.nipWali || '';
         document.getElementById('setKelasWali').value = s.kelasWali || '3';
+        loadDriveUrlIntoForm();
         try {
             const auth = await _sbGet('authUser');
             const cred = auth.length > 0 ? auth[0] : { user: 'admin', pass: 'admin123' };
@@ -3233,6 +3363,7 @@
         document.getElementById('filterTglAbsensi').value = lastDate;
         
         importDataSiswa();
+        loadDriveUrlIntoForm();
 
         const hariList = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
         const hariIni = hariList[now.getDay()];
