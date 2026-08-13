@@ -960,6 +960,23 @@
                             </tbody>
                         </table>
                     </div>
+                    <h3 style="font-size:1em;color:#1a73e8;margin-bottom:12px;">👨‍🏫 Guru Mata Pelajaran</h3>
+                    <div style="margin-bottom:20px;padding:14px;background:#e8f0fe;border-radius:10px;border:1px solid #aecbfa;">
+                        <small style="color:#555;display:block;margin-bottom:10px;">Nama dan NIP guru mata pelajaran yang mengajar di semua kelas 1–6.</small>
+                        <table style="width:100%;border-collapse:collapse;font-size:0.9em;">
+                            <thead>
+                                <tr>
+                                    <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #aecbfa;">Guru</th>
+                                    <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #aecbfa;">Nama</th>
+                                    <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #aecbfa;">NIP</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td style="padding:6px 8px;font-weight:600;">🕌 Guru Agama Islam</td><td style="padding:4px;"><input type="text" class="form-control" id="agamaNama" style="width:100%;"></td><td style="padding:4px;"><input type="text" class="form-control" id="agamaNip" style="width:100%;"></td></tr>
+                                <tr><td style="padding:6px 8px;font-weight:600;">⚽ Guru PJOK</td><td style="padding:4px;"><input type="text" class="form-control" id="pjokNama" style="width:100%;"></td><td style="padding:4px;"><input type="text" class="form-control" id="pjokNip" style="width:100%;"></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                     <h3 style="font-size:1em;color:#1a73e8;margin-bottom:12px;">🔐 Akun Login</h3>
                     <div style="margin-bottom:20px;padding:14px;background:#f3f4ff;border-radius:10px;border:1px solid #c5cae9;">
                         <small style="color:#555;display:block;margin-bottom:10px;">Admin bisa mengakses semua kelas. Guru kelas hanya bisa melihat & mengelola data kelasnya sendiri. Username/password default: admin / admin123 dan kelas1–6 / kelas1–6.</small>
@@ -1751,16 +1768,21 @@
         const grid = document.getElementById('waliKelasGrid');
         if (!grid) return;
         const classes = _roleKelas ? [_roleKelas] : ['1','2','3','4','5','6'];
-        grid.innerHTML = classes.map(k => {
+        const card = (k, nama, nip, label) => `<div style="background:#f8f9fa;border:1px solid #e0e0e0;border-radius:10px;padding:12px;">
+            <div style="font-weight:700;color:#1a73e8;margin-bottom:6px;">${label}</div>
+            <div style="font-size:0.9em;">${nama}</div>
+            <div style="color:#666;font-size:0.8em;margin-top:2px;">NIP: ${nip}</div>
+        </div>`;
+        let html = classes.map(k => {
             const w = getWaliFor(k);
-            const nama = (w && w.nama) || '-';
-            const nip = (w && w.nip) || '-';
-            return `<div style="background:#f8f9fa;border:1px solid #e0e0e0;border-radius:10px;padding:12px;">
-                <div style="font-weight:700;color:#1a73e8;margin-bottom:6px;">Kelas ${k}</div>
-                <div style="font-size:0.9em;">👩‍🏫 ${nama}</div>
-                <div style="color:#666;font-size:0.8em;margin-top:2px;">NIP: ${nip}</div>
-            </div>`;
+            return card(k, (w && w.nama) || '-', (w && w.nip) || '-', 'Kelas ' + k);
         }).join('');
+        const s = getPengaturan();
+        const ga = s.guruAgama || {};
+        const gp = s.guruPjok || {};
+        html += card('ga', ga.nama || '-', ga.nip || '-', '🕌 Guru Agama Islam');
+        html += card('gp', gp.nama || '-', gp.nip || '-', '⚽ Guru PJOK');
+        grid.innerHTML = html;
     }
 
     // ===== CRUD SISWA =====
@@ -3422,6 +3444,12 @@
             document.getElementById('waliNama' + k).value = w.nama || '';
             document.getElementById('waliNip' + k).value = w.nip || '';
         }
+        const ga = s.guruAgama || {};
+        document.getElementById('agamaNama').value = ga.nama || '';
+        document.getElementById('agamaNip').value = ga.nip || '';
+        const gp = s.guruPjok || {};
+        document.getElementById('pjokNama').value = gp.nama || '';
+        document.getElementById('pjokNip').value = gp.nip || '';
         loadDriveUrlIntoForm();
         applyLogo();
         try {
@@ -3461,6 +3489,8 @@
             kepsek: document.getElementById('setKepsek').value.trim(),
             nipKepsek: document.getElementById('setNipKepsek').value.trim(),
             waliKelasMap: waliKelasMap,
+            guruAgama: { nama: document.getElementById('agamaNama').value.trim(), nip: document.getElementById('agamaNip').value.trim() },
+            guruPjok: { nama: document.getElementById('pjokNama').value.trim(), nip: document.getElementById('pjokNip').value.trim() },
             waliKelas: waliKelasMap['3'].nama,
             nipWali: waliKelasMap['3'].nip,
             kelasWali: '3',
