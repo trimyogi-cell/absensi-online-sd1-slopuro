@@ -290,7 +290,7 @@
         </div>
         <div id="loginError" style="color:#c62828;font-size:0.85em;margin-bottom:12px;display:none;">Username atau password salah!</div>
         <button class="btn btn-primary" onclick="doLogin()" style="width:100%;padding:12px;font-size:1em;">Masuk</button>
-        <p style="color:#aaa;font-size:0.75em;margin-top:16px;">Default: admin / admin123</p>
+        <p style="color:#aaa;font-size:0.72em;margin-top:16px;">Akun default: admin/admin123, kelas1-6/kelas1-6, agama/agama, pjok/pjok</p>
     </div>
 </div>
 
@@ -303,6 +303,7 @@
                 <h1>ABSENSI SD N 1 SELOPURO</h1>
             </div>
             <div class="subtitle">SD Negeri 1 Selopuro</div>
+            <div id="headerAccountLabel" style="font-size:0.8em;color:rgba(255,255,255,0.9);margin-top:2px;"></div>
         </div>
     </div>
     <div style="display:flex;align-items:center;gap:15px;">
@@ -385,6 +386,14 @@
                 <div class="stat-card">
                     <div class="stat-number" id="rataRata">-</div>
                     <div class="stat-label">Rata-rata Nilai</div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h2>👩‍🏫 Wali Kelas</h2>
+                </div>
+                <div class="card-body">
+                    <div id="waliKelasGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;"></div>
                 </div>
             </div>
             <div class="card">
@@ -971,6 +980,8 @@
                                 <tr><td style="padding:6px 8px;">Kelas 4</td><td style="padding:4px;"><input type="text" class="form-control" id="user4" style="width:100%;"></td><td style="padding:4px;"><div class="pass-wrap"><input type="password" class="form-control" id="pass4"><button type="button" class="pass-toggle" onclick="togglePass('pass4', this)" title="Lihat/sembunyikan">👁</button></div></td></tr>
                                 <tr><td style="padding:6px 8px;">Kelas 5</td><td style="padding:4px;"><input type="text" class="form-control" id="user5" style="width:100%;"></td><td style="padding:4px;"><div class="pass-wrap"><input type="password" class="form-control" id="pass5"><button type="button" class="pass-toggle" onclick="togglePass('pass5', this)" title="Lihat/sembunyikan">👁</button></div></td></tr>
                                 <tr><td style="padding:6px 8px;">Kelas 6</td><td style="padding:4px;"><input type="text" class="form-control" id="user6" style="width:100%;"></td><td style="padding:4px;"><div class="pass-wrap"><input type="password" class="form-control" id="pass6"><button type="button" class="pass-toggle" onclick="togglePass('pass6', this)" title="Lihat/sembunyikan">👁</button></div></td></tr>
+                                <tr><td style="padding:6px 8px;">🕌 Guru Agama Islam</td><td style="padding:4px;"><input type="text" class="form-control" id="userAgama" style="width:100%;"></td><td style="padding:4px;"><div class="pass-wrap"><input type="password" class="form-control" id="passAgama"><button type="button" class="pass-toggle" onclick="togglePass('passAgama', this)" title="Lihat/sembunyikan">👁</button></div></td></tr>
+                                <tr><td style="padding:6px 8px;">⚽ Guru PJOK</td><td style="padding:4px;"><input type="text" class="form-control" id="userPjok" style="width:100%;"></td><td style="padding:4px;"><div class="pass-wrap"><input type="password" class="form-control" id="passPjok"><button type="button" class="pass-toggle" onclick="togglePass('passPjok', this)" title="Lihat/sembunyikan">👁</button></div></td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -1733,7 +1744,24 @@
         if (hariIni !== 'Minggu') {
             document.getElementById('filterHariJadwal').value = hariIni;
         }
+        renderWaliKelas();
         renderJadwal();
+    }
+
+    function renderWaliKelas() {
+        const grid = document.getElementById('waliKelasGrid');
+        if (!grid) return;
+        const classes = _roleKelas ? [_roleKelas] : ['1','2','3','4','5','6'];
+        grid.innerHTML = classes.map(k => {
+            const w = getWaliFor(k);
+            const nama = (w && w.nama) || '-';
+            const nip = (w && w.nip) || '-';
+            return `<div style="background:#f8f9fa;border:1px solid #e0e0e0;border-radius:10px;padding:12px;">
+                <div style="font-weight:700;color:#1a73e8;margin-bottom:6px;">Kelas ${k}</div>
+                <div style="font-size:0.9em;">👩‍🏫 ${nama}</div>
+                <div style="color:#666;font-size:0.8em;margin-top:2px;">NIP: ${nip}</div>
+            </div>`;
+        }).join('');
     }
 
     // ===== CRUD SISWA =====
@@ -1827,14 +1855,16 @@
     }
 
     function hapusSemuaSiswa() {
+        const scope = isAdminUser() ? '' : getKelasFilter('filterKelasSiswa');
+        if (!isAdminUser() && !scope) { alert('Pilih kelas dulu di filter Data Siswa!'); return; }
         let target = getData('siswa');
-        if (_roleKelas) target = target.filter(s => String(s.kelas) === _roleKelas);
+        if (scope) target = target.filter(s => String(s.kelas) === scope);
         if (target.length === 0) { alert('Tidak ada data siswa di kelas ini!'); return; }
-        if (!confirm('Yakin hapus SEMUA siswa (' + target.length + ' data)? Data absensi dan nilai terkait juga akan terhapus!')) return;
+        if (!confirm('Yakin hapus SEMUA siswa ' + (scope ? 'kelas ' + scope : '') + ' (' + target.length + ' data)? Data absensi dan nilai terkait juga akan terhapus!')) return;
         const nisns = new Set(target.map(s => s.nisn));
-        let sisaSiswa = _roleKelas ? getData('siswa').filter(s => !nisns.has(s.nisn)) : [];
-        let sisaAbsensi = _roleKelas ? getData('absensi').filter(a => !nisns.has(a.nisn)) : [];
-        let sisaNilai = _roleKelas ? getData('nilai').filter(n => !nisns.has(n.nisn)) : [];
+        let sisaSiswa = scope ? getData('siswa').filter(s => !nisns.has(s.nisn)) : [];
+        let sisaAbsensi = scope ? getData('absensi').filter(a => !nisns.has(a.nisn)) : [];
+        let sisaNilai = scope ? getData('nilai').filter(n => !nisns.has(n.nisn)) : [];
         setData('siswa', sisaSiswa);
         setData('absensi', sisaAbsensi);
         setData('nilai', sisaNilai);
@@ -2037,13 +2067,15 @@
     }
 
     function hapusSemuaAbsensi() {
-        if (_roleKelas) {
-            const nisns = new Set(getData('siswa').filter(s => String(s.kelas) === _roleKelas).map(s => s.nisn));
+        const scope = isAdminUser() ? '' : getKelasFilter('filterKelasAbsensi');
+        if (!isAdminUser() && !scope) { alert('Pilih kelas dulu di filter Absensi!'); return; }
+        if (scope) {
+            const nisns = new Set(getData('siswa').filter(s => String(s.kelas) === scope).map(s => s.nisn));
             let sisa = getData('absensi').filter(a => !nisns.has(a.nisn));
             if (sisa.length === getData('absensi').length) { alert('Tidak ada data absensi di kelas ini!'); return; }
-            if (!confirm('Yakin hapus SEMUA data absensi di kelas ' + _roleKelas + '?')) return;
+            if (!confirm('Yakin hapus SEMUA data absensi kelas ' + scope + '?')) return;
             setData('absensi', sisa);
-            alert('Data absensi kelas ' + _roleKelas + ' berhasil dihapus!');
+            alert('Data absensi kelas ' + scope + ' berhasil dihapus!');
             renderAbsensi();
             return;
         }
@@ -2378,13 +2410,15 @@
     }
 
     function hapusSemuaNilai() {
-        if (_roleKelas) {
-            const nisns = new Set(getData('siswa').filter(s => String(s.kelas) === _roleKelas).map(s => s.nisn));
+        const scope = isAdminUser() ? '' : getKelasFilter('filterKelasNilai');
+        if (!isAdminUser() && !scope) { alert('Pilih kelas dulu di filter Nilai!'); return; }
+        if (scope) {
+            const nisns = new Set(getData('siswa').filter(s => String(s.kelas) === scope).map(s => s.nisn));
             let sisa = getData('nilai').filter(n => !nisns.has(n.nisn));
             if (sisa.length === getData('nilai').length) { alert('Tidak ada data nilai di kelas ini!'); return; }
-            if (!confirm('Yakin hapus SEMUA data nilai di kelas ' + _roleKelas + '?')) return;
+            if (!confirm('Yakin hapus SEMUA data nilai kelas ' + scope + '?')) return;
             setData('nilai', sisa);
-            alert('Data nilai kelas ' + _roleKelas + ' berhasil dihapus!');
+            alert('Data nilai kelas ' + scope + ' berhasil dihapus!');
             renderNilaiInline();
             return;
         }
@@ -3262,11 +3296,16 @@
     }
 
     // ===== LOGIN / LOGOUT =====
+    let _role = '';
     let _roleKelas = '';
     let _dataSig = '';
 
     function getRoleKelas() { return _roleKelas; }
-    function isAdminUser() { return _roleKelas === ''; }
+    function isAdminUser() { return _role === 'admin'; }
+    function getRoleLabel(role) {
+        const map = { admin: 'Administrator', '1': 'Kelas 1', '2': 'Kelas 2', '3': 'Kelas 3', '4': 'Kelas 4', '5': 'Kelas 5', '6': 'Kelas 6', agama: 'Guru Agama Islam', pjok: 'Guru PJOK' };
+        return map[String(role)] || 'Administrator';
+    }
     function getKelasFilter(elId) {
         const el = document.getElementById(elId);
         let k = el ? el.value : '';
@@ -3277,7 +3316,7 @@
     const _hiddenPages = ['pengaturanSekolah', 'kalender', 'editGrade'];
 
     function lockKelasFilters() {
-        if (isAdminUser()) return;
+        if (isAdminUser() || !_roleKelas) return;
         const ids = ['filterKelasSiswa', 'filterKelasAbsensi', 'filterKelasNilai', 'filterKelasJadwal', 'filterKelasAturJadwal', 'rekapKelasAbs', 'rekapKelasNilai'];
         ids.forEach(id => {
             const el = document.getElementById(id);
@@ -3289,7 +3328,8 @@
     }
 
     function applyRoleUI(role) {
-        _roleKelas = (role && role !== 'admin') ? String(role) : '';
+        _role = role || 'admin';
+        _roleKelas = ['1','2','3','4','5','6'].includes(String(_role)) ? String(_role) : '';
         const isAdmin = isAdminUser();
         document.querySelectorAll('.menu-item').forEach(el => {
             const m = (el.getAttribute('onclick') || '').match(/showPage\('([^']+)'/);
@@ -3297,6 +3337,8 @@
                 el.style.display = isAdmin ? '' : 'none';
             }
         });
+        const lbl = document.getElementById('headerAccountLabel');
+        if (lbl) lbl.textContent = 'Akun: ' + getRoleLabel(_role);
         lockKelasFilters();
     }
 
@@ -3305,7 +3347,17 @@
         const pass = document.getElementById('loginPass').value;
         try {
             const auth = await _sbGet('authUser');
-            const accounts = (Array.isArray(auth) && auth.length > 0) ? auth : [{ user: 'admin', pass: 'admin123', role: 'admin' }];
+            const accounts = (Array.isArray(auth) && auth.length > 0) ? auth : [
+                { role: 'admin', user: 'admin', pass: 'admin123' },
+                { role: '1', user: 'kelas1', pass: 'kelas1' },
+                { role: '2', user: 'kelas2', pass: 'kelas2' },
+                { role: '3', user: 'kelas3', pass: 'kelas3' },
+                { role: '4', user: 'kelas4', pass: 'kelas4' },
+                { role: '5', user: 'kelas5', pass: 'kelas5' },
+                { role: '6', user: 'kelas6', pass: 'kelas6' },
+                { role: 'agama', user: 'agama', pass: 'agama' },
+                { role: 'pjok', user: 'pjok', pass: 'pjok' }
+            ];
             const acct = accounts.find(a => a.user === user && a.pass === pass);
             if (acct) {
                 sessionStorage.setItem('loggedIn', '1');
@@ -3358,17 +3410,16 @@
     function fillAccountFields(accounts) {
         const roles = [
             ['admin', 'Admin'], ['1', '1'], ['2', '2'], ['3', '3'],
-            ['4', '4'], ['5', '5'], ['6', '6']
+            ['4', '4'], ['5', '5'], ['6', '6'], ['agama', 'Agama'], ['pjok', 'Pjok']
         ];
         roles.forEach(([r, idRole]) => {
             const acct = accounts.find(a => String(a.role) === r) ||
                          (r === 'admin' ? accounts.find(a => a.role == null) : null);
-            const defUser = r === 'admin' ? 'admin' : 'kelas' + r;
-            const defPass = r === 'admin' ? 'admin123' : 'kelas' + r;
+            const defUser = r === 'admin' ? 'admin' : (r === 'agama' || r === 'pjok') ? r : 'kelas' + r;
             const u = document.getElementById('user' + idRole);
             const p = document.getElementById('pass' + idRole);
             if (u) u.value = acct ? (acct.user || '') : defUser;
-            if (p) p.value = acct ? (acct.pass || '') : defPass;
+            if (p) p.value = acct ? (acct.pass || '') : defUser;
         });
     }
 
@@ -3397,7 +3448,9 @@
             { role: '3', user: document.getElementById('user3').value.trim(), pass: document.getElementById('pass3').value },
             { role: '4', user: document.getElementById('user4').value.trim(), pass: document.getElementById('pass4').value },
             { role: '5', user: document.getElementById('user5').value.trim(), pass: document.getElementById('pass5').value },
-            { role: '6', user: document.getElementById('user6').value.trim(), pass: document.getElementById('pass6').value }
+            { role: '6', user: document.getElementById('user6').value.trim(), pass: document.getElementById('pass6').value },
+            { role: 'agama', user: document.getElementById('userAgama').value.trim(), pass: document.getElementById('passAgama').value },
+            { role: 'pjok', user: document.getElementById('userPjok').value.trim(), pass: document.getElementById('passPjok').value }
         ];
         if (accounts.some(a => !a.user || !a.pass)) { alert('Semua username dan password harus diisi!'); return; }
         _memStore['pengaturanSekolah'] = JSON.stringify(s);
