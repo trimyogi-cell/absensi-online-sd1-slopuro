@@ -1250,6 +1250,29 @@
     </div>
 </div>
 
+<!-- Modal Konfirmasi Scan (scan satu per satu) -->
+<div class="modal" id="modalScanConfirm">
+    <div class="modal-content" style="max-width:420px;">
+        <div class="modal-header">
+            <h3>✅ Konfirmasi Absensi</h3>
+        </div>
+        <div class="modal-body">
+            <div style="background:#f5f8ff;border:1px solid #d0e0ff;border-radius:10px;padding:14px;margin-bottom:14px;font-size:1em;line-height:2;">
+                <div><strong>Nama:</strong> <span id="confirmNama" style="color:#1a73e8;"></span></div>
+                <div><strong>Kelas:</strong> <span id="confirmKelas"></span></div>
+                <div><strong>Hari:</strong> <span id="confirmHari"></span></div>
+                <div><strong>Tanggal:</strong> <span id="confirmTgl"></span></div>
+            </div>
+            <div id="confirmWarning" style="display:none;background:#ffebee;border:1px solid #ffcdd2;color:#c62828;border-radius:8px;padding:10px;font-size:0.85em;margin-bottom:10px;"></div>
+            <p style="font-size:0.85em;color:#666;margin:0;">Periksa kesesuaian data di atas, lalu klik <strong>Sesuai / OK</strong> untuk menandai <strong>Hadir</strong>. Setelah itu baru bisa scan siswa berikutnya.</p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-danger" onclick="batalScanConfirm()">❌ Tidak Sesuai</button>
+            <button class="btn btn-success" id="btnConfirmOK" onclick="okScanConfirm()">✅ Sesuai / OK</button>
+        </div>
+    </div>
+</div>
+
 <!-- Modal Nilai -->
 <div class="modal" id="modalNilai">
     <div class="modal-content" style="max-width:600px;">
@@ -1499,6 +1522,16 @@
         const days = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
         const months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
         return days[d.getDay()] + ', ' + d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
+    }
+
+    function getNamaHariIndo(dateStr) {
+        return ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'][new Date(dateStr + 'T00:00:00').getDay()];
+    }
+
+    function getTanggalIndo(dateStr) {
+        const d = new Date(dateStr + 'T00:00:00');
+        const months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+        return d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
     }
 
     // ===== GOOGLE DRIVE BACKUP (cadangan di samping Supabase) =====
@@ -3967,7 +4000,7 @@
 
     async function init() {
         const vEl = document.getElementById('appVersion');
-        if (vEl) vEl.textContent = 'v2026.08.20';
+        if (vEl) vEl.textContent = 'v2026.08.21';
         await _loadFromServer();
         document.getElementById('loadingOverlay').style.display = 'none';
         checkLogin();
@@ -4003,6 +4036,8 @@
     let _qrTgl = '';
     let _qrStatusEl = null;
     let _qrListEl = null;
+    let _qrReaderId = '';
+    let _pendingScan = null;
 
     function hentikanQr() {
         if (_qrScanner) {
@@ -4011,7 +4046,24 @@
         }
     }
 
+    function berhentiSementara() {
+        if (_qrScanner) {
+            try { _qrScanner.stop().catch(() => {}); } catch (e) {}
+        }
+    }
+
+    function lanjutkanScan() {
+        setTimeout(() => {
+            if (_qrStatusEl) {
+                _qrStatusEl.textContent = 'Siap scan berikutnya...';
+                _qrStatusEl.style.color = '#0f9d58';
+            }
+            mulaiQrReader(_qrReaderId, _qrStatusEl, _qrListEl);
+        }, 500);
+    }
+
     function mulaiQrReader(readerId, statusEl, listEl) {
+        _qrReaderId = readerId;
         _qrStatusEl = statusEl;
         _qrListEl = listEl;
         hentikanQr();
@@ -4100,14 +4152,48 @@
 
         const tgl = _qrTgl;
         const sudahAda = getData('absensi').find(a => a.nisn === nisn && a.tanggal === tgl);
-        if (sudahAda) {
-            tambahScanList(siswa.nama + ' (Kelas ' + siswa.kelas + ')', '❌ Sudah absen hari ini (ubah via aplikasi)', 'err');
-            return;
-        }
 
-        const jam = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-        simpanSatuAbsensi(nisn, 'Hadir', 'Scan QR ' + jam, tgl);
-        tambahScanList(siswa.nama + ' (Kelas ' + siswa.kelas + ')', '✅ Hadir ' + jam, 'ok');
+        berhentiSementara();
+        if (_qrStatusEl) {
+            _qrStatusEl.textContent = 'Verifikasi data siswa...';
+            _qrStatusEl.style.color = '#f4b400';
+        }
+        _pendingScan = { nisn, siswa, tgl, sudahAda };
+        document.getElementById('confirmNama').textContent = siswa.nama;
+        document.getElementById('confirmKelas').textContent = 'Kelas ' + siswa.kelas;
+        document.getElementById('confirmHari').textContent = getNamaHariIndo(tgl);
+        document.getElementById('confirmTgl').textContent = getTanggalIndo(tgl);
+        const warn = document.getElementById('confirmWarning');
+        const btnOK = document.getElementById('btnConfirmOK');
+        if (sudahAda) {
+            warn.style.display = 'block';
+            warn.textContent = '⚠️ ' + siswa.nama + ' sudah absen pada tanggal ini. Tidak bisa menandai Hadir lagi (ubah lewat aplikasi).';
+            btnOK.style.display = 'none';
+        } else {
+            warn.style.display = 'none';
+            btnOK.style.display = '';
+        }
+        openModal('modalScanConfirm');
+    }
+
+    function okScanConfirm() {
+        closeModal('modalScanConfirm');
+        const p = _pendingScan;
+        _pendingScan = null;
+        if (p && !p.sudahAda) {
+            const jam = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            simpanSatuAbsensi(p.nisn, 'Hadir', 'Scan QR ' + jam, p.tgl);
+            tambahScanList(p.siswa.nama + ' (Kelas ' + p.siswa.kelas + ')', '✅ Hadir ' + jam, 'ok');
+        }
+        lanjutkanScan();
+    }
+
+    function batalScanConfirm() {
+        closeModal('modalScanConfirm');
+        const p = _pendingScan;
+        _pendingScan = null;
+        if (p) tambahScanList(p.siswa.nama + ' (Kelas ' + p.siswa.kelas + ')', '⏭️ Dibatalkan / tidak sesuai', 'err');
+        lanjutkanScan();
     }
 
     function tambahScanList(nama, info, cls) {
