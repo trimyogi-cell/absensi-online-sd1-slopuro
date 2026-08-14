@@ -1079,6 +1079,12 @@
                             <button class="btn" style="background:#ff9800;color:#fff;" onclick="restoreFromDrive()">⬇️ Pulihkan dari Drive</button>
                             <span id="driveStatus" style="font-size:0.8em;font-weight:600;">Status: Belum Terhubung</span>
                         </div>
+                        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px;">
+                            <select id="driveFileList" style="padding:6px;border:1px solid #ccc;border-radius:6px;font-size:0.85em;max-width:280px;"></select>
+                            <button class="btn" style="background:#5f6368;color:#fff;" onclick="loadDriveFileList()">🔄 Muat Daftar</button>
+                            <button class="btn" style="background:#d93025;color:#fff;" onclick="restoreFromDriveFile()">📂 Pulihkan dari File</button>
+                            <small style="color:#666;">Backup otomatis disimpan per-bulan (mis. data-bulanan-2026-07.json). Pilih file lalu klik Pulihkan.</small>
+                        </div>
                     </div>
                     <button class="btn btn-primary" onclick="simpanPengaturan()">💾 Simpan Semua Pengaturan</button>
                 </div>
@@ -1611,42 +1617,82 @@
         })
         .catch(err => { setDriveStatus('❌ Gagal terhubung: ' + err.message, '#c62828'); });
     }
+    async function applyRestoreData(d) {
+        const tables = ['siswa','absensi','nilai','libur','gradeSetting','pengaturanSekolah','authUser','jadwalPelajaran'];
+        let restored = 0;
+        for (const t of tables) {
+            if (d[t] !== undefined) {
+                _memStore[t] = JSON.stringify(d[t]);
+                await _sbSet(t, d[t]).catch(e => console.error('Restore ' + t + ':', e));
+                restored++;
+            }
+        }
+        if (d.kkm) {
+            try {
+                const k = d.kkm;
+                for (const kk in k) {
+                    _memStore[kk] = k[kk];
+                    if (kk.indexOf('kkm_') === 0) {
+                        localStorage.setItem(kk, k[kk]);
+                    }
+                    _syncToServer(kk);
+                }
+            } catch(e) {}
+        }
+        setDriveStatus('✅ Dipulihkan: ' + new Date().toLocaleTimeString(), '#0f9d58');
+        alert('Data berhasil dipulihkan (' + restored + ' tabel)!');
+        renderDashboard(); renderSiswa(); renderAbsensi(); renderNilaiInline();
+        var ap = document.querySelector('.page.active');
+        if (ap) { var pid = ap.id.replace('page-',''); refreshPage(pid); }
+    }
     function restoreFromDrive() {
         const url = getDriveUrl();
         if (!url) { setDriveStatus('⚠️ URL belum diisi', '#c62828'); alert('Masukkan URL Web App Google Apps Script di Pengaturan terlebih dahulu!'); return; }
-        if (!confirm('Pulihkan data dari Google Drive?\nData di server saat ini AKAN DIGANTI dengan data backup Drive.')) return;
+        if (!confirm('Pulihkan data dari Google Drive (backup terbaru)?\nData di server saat ini AKAN DIGANTI dengan data backup Drive.')) return;
         setDriveStatus('⏳ Mengunduh backup dari Drive...', '#ff9800');
         fetch(url + (url.indexOf('?') >= 0 ? '&' : '?') + 'action=load', { method: 'GET', mode: 'cors' })
         .then(r => r.json())
         .then(async res => {
             if (res.success && res.data) {
-                const d = res.data;
-                const tables = ['siswa','absensi','nilai','libur','gradeSetting','pengaturanSekolah','authUser','jadwalPelajaran'];
-                let restored = 0;
-                for (const t of tables) {
-                    if (d[t] !== undefined) {
-                        _memStore[t] = JSON.stringify(d[t]);
-                        await _sbSet(t, d[t]).catch(e => console.error('Restore ' + t + ':', e));
-                        restored++;
-                    }
-                }
-                if (d.kkm) {
-                    try {
-                        const k = d.kkm;
-                        for (const kk in k) {
-                            _memStore[kk] = k[kk];
-                            if (kk.indexOf('kkm_') === 0) {
-                                localStorage.setItem(kk, k[kk]);
-                            }
-                            _syncToServer(kk);
-                        }
-                    } catch(e) {}
-                }
-                setDriveStatus('✅ Dipulihkan dari Drive: ' + new Date().toLocaleTimeString(), '#0f9d58');
-                alert('Data berhasil dipulihkan dari Google Drive (' + restored + ' tabel)!');
-                renderDashboard(); renderSiswa(); renderAbsensi(); renderNilaiInline();
-                var ap = document.querySelector('.page.active');
-                if (ap) { var pid = ap.id.replace('page-',''); refreshPage(pid); }
+                await applyRestoreData(res.data);
+            } else {
+                setDriveStatus('❌ Gagal: ' + (res.error || 'Tidak ada data'), '#c62828');
+            }
+        })
+        .catch(err => { setDriveStatus('❌ Gagal terhubung: ' + err.message, '#c62828'); });
+    }
+    function loadDriveFileList() {
+        const url = getDriveUrl();
+        if (!url) { setDriveStatus('⚠️ URL belum diisi', '#c62828'); alert('Masukkan URL Web App Google Apps Script di Pengaturan terlebih dahulu!'); return; }
+        const sel = document.getElementById('driveFileList');
+        if (!sel) return;
+        sel.innerHTML = '<option value="">Memuat daftar...</option>';
+        fetch(url + (url.indexOf('?') >= 0 ? '&' : '?') + 'action=list', { method: 'GET', mode: 'cors' })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success && Array.isArray(res.files)) {
+                sel.innerHTML = '<option value="">-- Pilih file backup --</option>' +
+                    res.files.map(f => '<option value="' + f.replace(/"/g, '&quot;') + '">' + f.replace(/"/g, '&quot;') + '</option>').join('');
+            } else {
+                sel.innerHTML = '<option value="">' + ((res.error || 'Gagal memuat daftar').replace(/"/g, '&quot;')) + '</option>';
+            }
+        })
+        .catch(() => { sel.innerHTML = '<option value="">Gagal terhubung ke Drive</option>'; });
+    }
+    function restoreFromDriveFile() {
+        const url = getDriveUrl();
+        const sel = document.getElementById('driveFileList');
+        const name = sel ? sel.value : '';
+        if (!url) { setDriveStatus('⚠️ URL belum diisi', '#c62828'); alert('Masukkan URL Web App Google Apps Script di Pengaturan terlebih dahulu!'); return; }
+        if (!name) { alert('Pilih file backup terlebih dahulu (klik 🔄 Muat Daftar).'); return; }
+        if (!confirm('Pulihkan data dari file "' + name + '"?\nData di server saat ini AKAN DIGANTI dengan isi file tersebut.')) return;
+        setDriveStatus('⏳ Mengunduh ' + name + ' ...', '#ff9800');
+        fetch(url + (url.indexOf('?') >= 0 ? '&' : '?') + 'action=load&file=' + encodeURIComponent(name), { method: 'GET', mode: 'cors' })
+        .then(r => r.json())
+        .then(async res => {
+            if (res.success && res.data) {
+                await applyRestoreData(res.data);
+                loadDriveFileList();
             } else {
                 setDriveStatus('❌ Gagal: ' + (res.error || 'Tidak ada data'), '#c62828');
             }
@@ -3639,6 +3685,7 @@
         document.getElementById('pjokNama').value = gp.nama || '';
         document.getElementById('pjokNip').value = gp.nip || '';
         loadDriveUrlIntoForm();
+        loadDriveFileList();
         applyLogo();
         try {
             const auth = await _sbGet('authUser');
@@ -3996,7 +4043,7 @@
 
     async function init() {
         const vEl = document.getElementById('appVersion');
-        if (vEl) vEl.textContent = 'v2026.08.22';
+        if (vEl) vEl.textContent = 'v2026.08.23';
         await _loadFromServer();
         document.getElementById('loadingOverlay').style.display = 'none';
         checkLogin();
