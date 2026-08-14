@@ -600,7 +600,7 @@
                         </div>
                         <button class="btn btn-primary" onclick="bukaScanQR()">📷 Scan QR</button>
                         <button class="btn btn-success" onclick="simpanSemuaAbsensi()">💾 Simpan Semua</button>
-                        <button class="btn btn-danger" onclick="hapusSemuaAbsensi()">🗑️ Hapus Semua</button>
+                        <button class="btn btn-danger" onclick="hapusSemuaAbsensi()">🗑️ Hapus Hari Ini</button>
                     </div>
                 </div>
                 <div class="card-body">
@@ -2259,21 +2259,17 @@
     }
 
     function hapusSemuaAbsensi() {
-        const scope = isAdminUser() ? '' : getKelasFilter('filterKelasAbsensi');
-        if (!isAdminUser() && !scope) { alert('Pilih kelas dulu di filter Absensi!'); return; }
-        if (scope) {
-            const nisns = new Set(getData('siswa').filter(s => String(s.kelas) === scope).map(s => s.nisn));
-            let sisa = getData('absensi').filter(a => !nisns.has(a.nisn));
-            if (sisa.length === getData('absensi').length) { alert('Tidak ada data absensi di kelas ini!'); return; }
-            if (!confirm('Yakin hapus SEMUA data absensi kelas ' + scope + '?')) return;
-            setData('absensi', sisa);
-            alert('Data absensi kelas ' + scope + ' berhasil dihapus!');
-            renderAbsensi();
-            return;
-        }
-        if (!confirm('Yakin hapus SEMUA data absensi?')) return;
-        setData('absensi', []);
-        alert('Semua data absensi berhasil dihapus!');
+        const tgl = document.getElementById('filterTglAbsensi').value;
+        if (!tgl) { alert('Pilih tanggal terlebih dahulu!'); return; }
+        const kelas = getKelasFilter('filterKelasAbsensi');
+        const cekTanggal = a => a.tanggal === tgl && (!kelas || getKelasSiswa(a.nisn) === kelas);
+        const data = getData('absensi');
+        const target = data.filter(cekTanggal);
+        const label = formatTanggalIndo(tgl) + (kelas ? ' (Kelas ' + kelas + ')' : '');
+        if (target.length === 0) { alert('Tidak ada data absensi tanggal ' + label + '!'); return; }
+        if (!confirm('Yakin hapus SEMUA data absensi tanggal ' + label + '? (' + target.length + ' data)')) return;
+        setData('absensi', data.filter(a => !cekTanggal(a)));
+        alert('Data absensi ' + label + ' berhasil dihapus!');
         renderAbsensi();
     }
 
@@ -4000,7 +3996,7 @@
 
     async function init() {
         const vEl = document.getElementById('appVersion');
-        if (vEl) vEl.textContent = 'v2026.08.21';
+        if (vEl) vEl.textContent = 'v2026.08.22';
         await _loadFromServer();
         document.getElementById('loadingOverlay').style.display = 'none';
         checkLogin();
