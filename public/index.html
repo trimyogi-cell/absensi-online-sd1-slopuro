@@ -3978,7 +3978,7 @@
         return k;
     }
 
-    const _hiddenPages = ['pengaturanSekolah', 'kalender', 'editGrade'];
+    const _hiddenPages = ['pengaturanSekolah', 'kalender', 'editGrade', 'liveScan'];
 
     function lockKelasFilters() {
         if (isAdminUser() || !_roleKelas) return;
@@ -4429,7 +4429,7 @@
 
     async function init() {
         const vEl = document.getElementById('appVersion');
-        if (vEl) vEl.textContent = 'v2026.09.01';
+        if (vEl) vEl.textContent = 'v2026.09.02';
         await _loadFromServer();
         document.getElementById('loadingOverlay').style.display = 'none';
         checkLogin();
