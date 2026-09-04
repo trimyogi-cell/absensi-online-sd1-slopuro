@@ -4500,7 +4500,7 @@
 
     async function init() {
         const vEl = document.getElementById('appVersion');
-        if (vEl) vEl.textContent = 'v2026.09.05';
+        if (vEl) vEl.textContent = 'v2026.09.06';
         await _loadFromServer();
         document.getElementById('loadingOverlay').style.display = 'none';
         checkLogin();
@@ -4624,6 +4624,16 @@
         closeModal('modalScanQR');
     }
 
+    function _goToLiveScan() {
+        if (!isAdminUser()) return;
+        hentikanQr();
+        const menuLive = document.querySelector('.menu-item[onclick*="liveScan"]');
+        showPage('liveScan', menuLive);
+        if (typeof startLiveFeed === 'function') {
+            setTimeout(function() { startLiveFeed(); }, 300);
+        }
+    }
+
     function onQRDecoded(text) {
         const clean = String(text || '').replace(/\s+/g, '').toUpperCase();
         const prefix = 'ABSENSI:';
@@ -4653,6 +4663,19 @@
 
         const tgl = _qrTgl;
         const sudahAda = getData('absensi').find(a => a.nisn === nisn && a.tanggal === tgl);
+
+        if (_qrReaderId === 'qr-reader-page') {
+            if (sudahAda) {
+                tambahScanList(siswa.nama + ' (Kelas ' + siswa.kelas + ')', '⚠️ Sudah absen', 'err');
+                return;
+            }
+            berhentiSementara();
+            const jam = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            simpanSatuAbsensi(nisn, 'Hadir', 'Scan QR ' + jam, tgl);
+            tambahScanList(siswa.nama + ' (Kelas ' + siswa.kelas + ')', '✅ Hadir ' + jam, 'ok');
+            setTimeout(function() { _goToLiveScan(); }, 600);
+            return;
+        }
 
         berhentiSementara();
         if (_qrStatusEl) {
