@@ -2142,6 +2142,24 @@
         showPage('dashboard', menuDashboard);
     }
 
+    function _lsBeep() {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, ctx.currentTime);
+            osc.frequency.setValueAtTime(1100, ctx.currentTime + 0.08);
+            osc.frequency.setValueAtTime(880, ctx.currentTime + 0.16);
+            gain.gain.setValueAtTime(0.3, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + 0.3);
+        } catch(e) {}
+    }
+
     function setLsFilter(status) {
         _lsFilter = status;
         document.querySelectorAll('.ls-stat-card').forEach(c => c.classList.remove('ls-stat-active'));
@@ -2206,6 +2224,7 @@
                     }
                 });
                 setTimeout(() => { _lsNewIds = new Set(); }, 3000);
+                if (_lsNewIds.size > 0) _lsBeep();
             }
             if (_liveScanEntries.length > 50) _liveScanEntries = _liveScanEntries.slice(0, 50);
         }
@@ -2331,19 +2350,23 @@
         const kelas = document.getElementById('inputBulkKelas').value;
         const tbody = document.getElementById('tabelBulkBody');
         if (!tbody) return;
-        const existing = getData('siswa').filter(s => String(s.kelas) === kelas);
-        const existingNisns = new Set(existing.map(s => s.nisn));
+        const existing = getData('siswa').filter(s => String(s.kelas) === kelas).sort((a,b) => (a.nama||'').localeCompare(b.nama||'','id'));
+        const totalRows = Math.max(_bulkRows, existing.length + 5);
         let html = '';
-        for (let i = 0; i < _bulkRows; i++) {
+        for (let i = 0; i < totalRows; i++) {
+            const s = existing[i] || {};
+            const jkOpts = '<option value="">-</option>'
+                + '<option value="Laki-laki"' + (s.jk === 'Laki-laki' ? ' selected' : '') + '>Laki-laki</option>'
+                + '<option value="Perempuan"' + (s.jk === 'Perempuan' ? ' selected' : '') + '>Perempuan</option>';
             html += '<tr>'
                 + '<td data-label="No" style="text-align:center;color:#999;">' + (i + 1) + '</td>'
-                + '<td data-label="NISN"><input type="text" class="bulk-nisn" placeholder="NISN" style="width:100%;padding:5px;border:1px solid #ddd;border-radius:4px;font-size:0.9em;"></td>'
-                + '<td data-label="Nama"><input type="text" class="bulk-nama" placeholder="Nama Lengkap" style="width:100%;padding:5px;border:1px solid #ddd;border-radius:4px;font-size:0.9em;"></td>'
-                + '<td data-label="JK"><select class="bulk-jk" style="width:100%;padding:5px;border:1px solid #ddd;border-radius:4px;font-size:0.9em;"><option value="">-</option><option value="Laki-laki">Laki-laki</option><option value="Perempuan">Perempuan</option></select></td>'
-                + '<td data-label="Tempat Lahir"><input type="text" class="bulk-tp_lahir" placeholder="Kota" style="width:100%;padding:5px;border:1px solid #ddd;border-radius:4px;font-size:0.9em;"></td>'
-                + '<td data-label="Tgl Lahir"><input type="date" class="bulk-tgl_lahir" style="width:100%;padding:5px;border:1px solid #ddd;border-radius:4px;font-size:0.9em;"></td>'
-                + '<td data-label="Alamat"><input type="text" class="bulk-alamat" placeholder="Alamat" style="width:100%;padding:5px;border:1px solid #ddd;border-radius:4px;font-size:0.9em;"></td>'
-                + '<td data-label="No. Ortu"><input type="text" class="bulk-noHP" placeholder="No HP" style="width:100%;padding:5px;border:1px solid #ddd;border-radius:4px;font-size:0.9em;"></td>'
+                + '<td data-label="NISN"><input type="text" class="bulk-nisn" value="' + (s.nisn||'') + '" placeholder="NISN" style="width:100%;padding:5px;border:1px solid #ddd;border-radius:4px;font-size:0.9em;"></td>'
+                + '<td data-label="Nama"><input type="text" class="bulk-nama" value="' + (s.nama||'').replace(/"/g,'&quot;') + '" placeholder="Nama Lengkap" style="width:100%;padding:5px;border:1px solid #ddd;border-radius:4px;font-size:0.9em;"></td>'
+                + '<td data-label="JK"><select class="bulk-jk" style="width:100%;padding:5px;border:1px solid #ddd;border-radius:4px;font-size:0.9em;">' + jkOpts + '</select></td>'
+                + '<td data-label="Tempat Lahir"><input type="text" class="bulk-tp_lahir" value="' + (s.tempatLahir||'').replace(/"/g,'&quot;') + '" placeholder="Kota" style="width:100%;padding:5px;border:1px solid #ddd;border-radius:4px;font-size:0.9em;"></td>'
+                + '<td data-label="Tgl Lahir"><input type="date" class="bulk-tgl_lahir" value="' + (s.tglLahir||'') + '" style="width:100%;padding:5px;border:1px solid #ddd;border-radius:4px;font-size:0.9em;"></td>'
+                + '<td data-label="Alamat"><input type="text" class="bulk-alamat" value="' + (s.alamat||'').replace(/"/g,'&quot;') + '" placeholder="Alamat" style="width:100%;padding:5px;border:1px solid #ddd;border-radius:4px;font-size:0.9em;"></td>'
+                + '<td data-label="No. Ortu"><input type="text" class="bulk-noHP" value="' + (s.noHP||'').replace(/"/g,'&quot;') + '" placeholder="No HP" style="width:100%;padding:5px;border:1px solid #ddd;border-radius:4px;font-size:0.9em;"></td>'
                 + '<td><button class="btn btn-danger btn-sm" onclick="this.closest(\'tr\').remove();" title="Hapus baris">✕</button></td>'
                 + '</tr>';
         }
@@ -4395,7 +4418,7 @@
 
     async function init() {
         const vEl = document.getElementById('appVersion');
-        if (vEl) vEl.textContent = 'v2026.08.30';
+        if (vEl) vEl.textContent = 'v2026.08.31';
         await _loadFromServer();
         document.getElementById('loadingOverlay').style.display = 'none';
         checkLogin();
