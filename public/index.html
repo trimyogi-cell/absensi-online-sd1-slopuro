@@ -621,14 +621,51 @@
 
         <!-- Input Data Siswa (CRUD) -->
         <div class="page" id="page-inputSiswa">
+            <div class="card" style="margin-bottom:20px;">
+                <div class="card-header">
+                    <h2>📝 Input Tabel Per Kelas</h2>
+                    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                        <select id="inputBulkKelas" class="form-control" style="width:auto;" onchange="renderInputBulk()">
+                            <option value="1">Kelas 1</option>
+                            <option value="2">Kelas 2</option>
+                            <option value="3">Kelas 3</option>
+                            <option value="4">Kelas 4</option>
+                            <option value="5">Kelas 5</option>
+                            <option value="6">Kelas 6</option>
+                        </select>
+                        <button class="btn btn-success" onclick="simpanBulkSiswa()">💾 Simpan Semua</button>
+                        <button class="btn" style="background:#607d8b;color:#fff;" onclick="tambahBarisBulk()">+ Tambah Baris</button>
+                        <button class="btn" style="background:#78909c;color:#fff;" onclick="renderInputBulk()">🔄 Reset Kosong</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div style="overflow-x:auto;">
+                    <table class="rt" id="tabelBulkInput">
+                        <thead>
+                            <tr>
+                                <th style="width:40px;text-align:center;">No</th>
+                                <th style="width:140px;">NISN</th>
+                                <th>Nama Lengkap</th>
+                                <th style="width:110px;">JK</th>
+                                <th style="width:130px;">Tempat Lahir</th>
+                                <th style="width:140px;">Tgl Lahir</th>
+                                <th>Alamat</th>
+                                <th style="width:120px;">No. Ortu</th>
+                                <th style="width:50px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelBulkBody"></tbody>
+                    </table>
+                    </div>
+                </div>
+            </div>
             <div class="card">
                 <div class="card-header">
-                    <h2>Input Data Siswa</h2>
+                    <h2>📋 Data Siswa Tersimpan</h2>
                     <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
                         <div class="search-box">
                             <input type="text" id="searchInputSiswa" placeholder="Cari siswa..." oninput="renderInputSiswa()">
                         </div>
-                        <button class="btn btn-primary" onclick="openModalSiswa()">+ Tambah</button>
                         <button class="btn btn-warning" onclick="hapusDitandaiSiswa()">🗑️ Hapus Ditandai</button>
                         <button class="btn btn-danger" onclick="hapusSemuaSiswa()">🗑️ Hapus Semua</button>
                     </div>
@@ -637,7 +674,7 @@
                     <div style="overflow-x:auto;">
                     <table class="rt">
                         <thead>
-                            <tr><th><input type="checkbox" id="cekAllSiswa" onchange="toggleAllSiswa()"></th><th>No</th><th>NISN</th><th>Nama Lengkap</th><th>Jenis Kelamin</th><th>Kelas</th><th>Tempat Lahir</th><th>Tanggal Lahir</th><th>Alamat</th><th>No. Ortu</th><th>Aksi</th></tr>
+                            <tr><th><input type="checkbox" id="cekAllSiswa" onchange="toggleAllSiswa()"></th><th>No</th><th>NISN</th><th>Nama Lengkap</th><th>JK</th><th>Kelas</th><th>Tempat Lahir</th><th>Tgl Lahir</th><th>Alamat</th><th>No. Ortu</th><th>Aksi</th></tr>
                         </thead>
                         <tbody id="tabelInputSiswa"></tbody>
                     </table>
@@ -1901,7 +1938,7 @@
         switch(page) {
             case 'dashboard': renderDashboard(); break;
             case 'siswa': renderSiswa(); break;
-            case 'inputSiswa': renderInputSiswa(); break;
+            case 'inputSiswa': renderInputBulk(); renderInputSiswa(); break;
             case 'aturJadwal':
                 var hariList2 = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
                 var hariIni2 = hariList2[new Date().getDay()];
@@ -2286,6 +2323,66 @@
                 </tr>
             `).join('');
         }
+    }
+
+    let _bulkRows = 30;
+
+    function renderInputBulk() {
+        const kelas = document.getElementById('inputBulkKelas').value;
+        const tbody = document.getElementById('tabelBulkBody');
+        if (!tbody) return;
+        const existing = getData('siswa').filter(s => String(s.kelas) === kelas);
+        const existingNisns = new Set(existing.map(s => s.nisn));
+        let html = '';
+        for (let i = 0; i < _bulkRows; i++) {
+            html += '<tr>'
+                + '<td data-label="No" style="text-align:center;color:#999;">' + (i + 1) + '</td>'
+                + '<td data-label="NISN"><input type="text" class="bulk-nisn" placeholder="NISN" style="width:100%;padding:5px;border:1px solid #ddd;border-radius:4px;font-size:0.9em;"></td>'
+                + '<td data-label="Nama"><input type="text" class="bulk-nama" placeholder="Nama Lengkap" style="width:100%;padding:5px;border:1px solid #ddd;border-radius:4px;font-size:0.9em;"></td>'
+                + '<td data-label="JK"><select class="bulk-jk" style="width:100%;padding:5px;border:1px solid #ddd;border-radius:4px;font-size:0.9em;"><option value="">-</option><option value="Laki-laki">Laki-laki</option><option value="Perempuan">Perempuan</option></select></td>'
+                + '<td data-label="Tempat Lahir"><input type="text" class="bulk-tp_lahir" placeholder="Kota" style="width:100%;padding:5px;border:1px solid #ddd;border-radius:4px;font-size:0.9em;"></td>'
+                + '<td data-label="Tgl Lahir"><input type="date" class="bulk-tgl_lahir" style="width:100%;padding:5px;border:1px solid #ddd;border-radius:4px;font-size:0.9em;"></td>'
+                + '<td data-label="Alamat"><input type="text" class="bulk-alamat" placeholder="Alamat" style="width:100%;padding:5px;border:1px solid #ddd;border-radius:4px;font-size:0.9em;"></td>'
+                + '<td data-label="No. Ortu"><input type="text" class="bulk-noHP" placeholder="No HP" style="width:100%;padding:5px;border:1px solid #ddd;border-radius:4px;font-size:0.9em;"></td>'
+                + '<td><button class="btn btn-danger btn-sm" onclick="this.closest(\'tr\').remove();" title="Hapus baris">✕</button></td>'
+                + '</tr>';
+        }
+        tbody.innerHTML = html;
+    }
+
+    function tambahBarisBulk() {
+        _bulkRows += 10;
+        renderInputBulk();
+    }
+
+    function simpanBulkSiswa() {
+        const kelas = document.getElementById('inputBulkKelas').value;
+        const rows = document.querySelectorAll('#tabelBulkBody tr');
+        let added = 0, skipped = 0, updated = 0;
+        let data = getData('siswa');
+        rows.forEach(row => {
+            const nisn = (row.querySelector('.bulk-nisn')?.value || '').trim();
+            const nama = (row.querySelector('.bulk-nama')?.value || '').trim();
+            if (!nisn || !nama) return;
+            const jk = row.querySelector('.bulk-jk')?.value || '';
+            const tp_lahir = (row.querySelector('.bulk-tp_lahir')?.value || '').trim();
+            const tgl = row.querySelector('.bulk-tgl_lahir')?.value || '';
+            const alamat = (row.querySelector('.bulk-alamat')?.value || '').trim();
+            const noHP = (row.querySelector('.bulk-noHP')?.value || '').trim();
+            const existing = data.findIndex(s => s.nisn === nisn);
+            const siswa = { nisn, nama, kelas, jk, tempatLahir: tp_lahir, tglLahir: tgl, alamat, noHP };
+            if (existing >= 0) {
+                data[existing] = { ...data[existing], ...siswa };
+                updated++;
+            } else {
+                data.push(siswa);
+                added++;
+            }
+        });
+        setData('siswa', data);
+        renderInputBulk();
+        renderInputSiswa();
+        alert('Selesai! Baru: ' + added + ', Diperbarui: ' + updated + ', Dilewati (kosong): ' + skipped);
     }
 
     function renderInputSiswa() {
@@ -4298,7 +4395,7 @@
 
     async function init() {
         const vEl = document.getElementById('appVersion');
-        if (vEl) vEl.textContent = 'v2026.08.29';
+        if (vEl) vEl.textContent = 'v2026.08.30';
         await _loadFromServer();
         document.getElementById('loadingOverlay').style.display = 'none';
         checkLogin();
