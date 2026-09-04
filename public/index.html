@@ -2341,15 +2341,15 @@
                 }
             }
         } else {
-            const filtered = _liveScanEntries.filter(e => e.status === _lsFilter);
+            const filtered = absensi.filter(a => a.status === _lsFilter);
             if (filtered.length === 0) {
                 listBig.innerHTML = '<div style="width:100%;max-width:700px;text-align:center;"><div style="color:#999;font-size:1.3em;padding:40px;">Belum ada siswa dengan status <strong>' + _lsFilter + '</strong></div></div>';
             } else {
                 const grouped = {};
-                filtered.forEach(e => {
-                    const k = getKelasSiswa(e.nisn) || '?';
+                filtered.forEach(a => {
+                    const k = getKelasSiswa(a.nisn) || '?';
                     if (!grouped[k]) grouped[k] = [];
-                    grouped[k].push(e);
+                    grouped[k].push({ nisn: a.nisn, status: a.status, ket: a.keterangan || '', time: a.waktu || '', id: (a.nisn || '') + '|' + a.status });
                 });
                 const kelasKeys = Object.keys(grouped).sort((a,b) => Number(a) - Number(b));
                 let html = '<div style="width:100%;max-width:700px;">';
@@ -4503,7 +4503,7 @@
 
     async function init() {
         const vEl = document.getElementById('appVersion');
-        if (vEl) vEl.textContent = 'v2026.09.07';
+        if (vEl) vEl.textContent = 'v2026.09.08';
         await _loadFromServer();
         document.getElementById('loadingOverlay').style.display = 'none';
         checkLogin();
