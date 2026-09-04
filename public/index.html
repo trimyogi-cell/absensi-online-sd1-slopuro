@@ -609,22 +609,6 @@
                         <div style="color:#d32f2f;font-size:0.9em;margin-top:4px;">⚠️ Alpa</div>
                     </div>
                 </div>
-                <div style="padding:0 24px 8px;flex-shrink:0;">
-                    <div style="display:flex;align-items:center;gap:12px;background:white;border:1px solid rgba(0,0,0,0.06);border-radius:12px;padding:8px 14px;">
-                        <span style="font-weight:700;color:#333;">📷 Scan QR Kamera (Webcam/IRunCam)</span>
-                        <button id="lsScanCamBtn" onclick="toggleLsCamera()" style="background:#1a73e8;color:white;border:none;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:0.85em;">▶ Aktifkan Kamera</button>
-                        <span id="lsScanCamStatus" style="font-size:0.8em;color:#888;">Klik aktifkan untuk scan otomatis</span>
-                    </div>
-                    <div id="lsScanCamArea" style="display:none;margin-top:8px;">
-                        <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start;">
-                            <div id="ls-qr-reader" style="width:320px;max-width:100%;background:#000;border-radius:12px;overflow:hidden;"></div>
-                            <div id="lsScanCamResult" style="flex:1;min-width:240px;background:white;border-radius:12px;padding:12px;border:1px solid rgba(0,0,0,0.06);">
-                                <div style="font-weight:700;color:#333;margin-bottom:8px;">🔄 Scan Terakhir</div>
-                                <div id="lsScanCamLast" style="color:#999;font-size:0.9em;">Belum ada scan...</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
                 <div style="flex:1;display:flex;flex-direction:column;align-items:center;padding:8px 24px 24px;overflow-y:auto;" id="liveScanListBig">
                     <div id="lsSingleCard" style="width:100%;max-width:500px;text-align:center;">
                         <div style="font-size:3em;margin-bottom:16px;">🏫</div>
@@ -1988,7 +1972,7 @@
         if (el) el.classList.add('active');
         if (page !== 'scanQR' && typeof hentikanQr === 'function') hentikanQr();
         refreshPage(page);
-        if (page === 'liveScan') startLiveFeed(); else { stopLiveFeed(); stopLsCamera(); }
+        if (page === 'liveScan') startLiveFeed(); else stopLiveFeed();
         const container = document.querySelector('.container');
         if (container) {
             if (page === 'liveScan') container.classList.add('live-scan-mode');
@@ -2211,12 +2195,8 @@
     let _lsFilter = '';
     let _lsWelcomeTimer = null;
     let _lsShowWelcome = true;
-    let _lsCameraScanner = null;
-    let _lsCameraActive = false;
-    let _lsLastScanNisn = '';
 
     function tutupLiveScan() {
-        stopLsCamera();
         const menuDashboard = document.querySelector('.menu-item[onclick*="dashboard"]');
         showPage('dashboard', menuDashboard);
     }
@@ -2237,97 +2217,6 @@
             osc.start(ctx.currentTime);
             osc.stop(ctx.currentTime + 0.3);
         } catch(e) {}
-    }
-
-    function toggleLsCamera() {
-        if (_lsCameraActive) { stopLsCamera(); return; }
-        if (typeof Html5Qrcode === 'undefined') {
-            setLsCamStatus('❌ Library pemindai belum dimuat. Periksa koneksi internet.', '#c62828');
-            return;
-        }
-        const area = document.getElementById('lsScanCamArea');
-        if (area) area.style.display = '';
-        setLsCamStatus('Menyiapkan kamera...', '#666');
-        _lsCameraScanner = new Html5Qrcode('ls-qr-reader');
-        _lsCameraScanner.start(
-            _cameraConfig(),
-            { fps: 10, qrbox: { width: 200, height: 200 } },
-            _onLsScan,
-            function() {}
-        ).then(function() {
-            _lsCameraActive = true;
-            const btn = document.getElementById('lsScanCamBtn');
-            if (btn) btn.textContent = '⏹ Berhenti Scan';
-            setLsCamStatus('Siap. Arahkan kartu QR siswa ke kamera.', '#0f9d58');
-        }).catch(function() {
-            try { _lsCameraScanner.stop().catch(function(){}); } catch(e) {}
-            _lsCameraScanner = new Html5Qrcode('ls-qr-reader');
-            _lsCameraScanner.start(
-                { facingMode: 'user' },
-                { fps: 10, qrbox: { width: 200, height: 200 } },
-                _onLsScan,
-                function() {}
-            ).then(function() {
-                _lsCameraActive = true;
-                const btn = document.getElementById('lsScanCamBtn');
-                if (btn) btn.textContent = '⏹ Berhenti Scan';
-                setLsCamStatus('Siap. Arahkan kartu QR siswa ke kamera.', '#0f9d58');
-            }).catch(function(err) {
-                setLsCamStatus('❌ Kamera tidak bisa dibuka: ' + err, '#c62828');
-            });
-        });
-    }
-
-    function stopLsCamera() {
-        _lsCameraActive = false;
-        if (_lsCameraScanner) {
-            try { _lsCameraScanner.stop().then(function(){ _lsCameraScanner.clear(); }).catch(function(){}); } catch(e) {}
-            _lsCameraScanner = null;
-        }
-        const btn = document.getElementById('lsScanCamBtn');
-        if (btn) btn.textContent = '▶ Aktifkan Kamera';
-        setLsCamStatus('Klik aktifkan untuk scan otomatis', '#888');
-    }
-
-    function setLsCamStatus(msg, color) {
-        const el = document.getElementById('lsScanCamStatus');
-        if (el) { el.textContent = msg; el.style.color = color; }
-    }
-
-    function _onLsScan(text) {
-        const clean = String(text || '').replace(/\s+/g, '').toUpperCase();
-        const prefix = 'ABSENSI:';
-        if (!clean.startsWith(prefix)) {
-            const last = document.getElementById('lsScanCamLast');
-            if (last) last.innerHTML = '<span style="color:#c62828;">❌ Bukan kartu absensi</span>';
-            return;
-        }
-        const nisn = clean.substring(prefix.length);
-        const siswa = getData('siswa').find(function(s) { return String(s.nisn) === nisn; });
-        if (!siswa) {
-            const last = document.getElementById('lsScanCamLast');
-            if (last) last.innerHTML = '<span style="color:#c62828;">❌ Siswa NISN ' + nisn + ' tidak ditemukan</span>';
-            return;
-        }
-        const now = Date.now();
-        if (_lsLastScanNisn === nisn && now - (_lsLastScanTime || 0) < 4000) return;
-        _lsLastScanNisn = nisn;
-        _lsLastScanTime = now;
-
-        const tgl = getTodayStr();
-        const sudahAda = getData('absensi').find(function(a) { return a.nisn === nisn && a.tanggal === tgl; });
-        if (sudahAda) {
-            const last = document.getElementById('lsScanCamLast');
-            if (last) last.innerHTML = '<div style="color:#e65100;"><strong>' + siswa.nama + '</strong> — sudah absen hari ini</div>';
-            return;
-        }
-        const jam = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-        simpanSatuAbsensi(nisn, 'Hadir', 'Scan QR ' + jam, tgl);
-        _lsBeep();
-        const last = document.getElementById('lsScanCamLast');
-        if (last) last.innerHTML = '<div style="color:#2e7d32;font-weight:700;">✅ ' + siswa.nama + ' (Kelas ' + siswa.kelas + ') — Hadir ' + jam + '</div>';
-        updateLiveFeed();
-        _lsResetWelcomeTimer();
     }
 
     function setLsFilter(status) {
@@ -4630,7 +4519,7 @@
 
     async function init() {
         const vEl = document.getElementById('appVersion');
-        if (vEl) vEl.textContent = 'v2026.09.14';
+        if (vEl) vEl.textContent = 'v2026.09.15';
         await _loadFromServer();
         document.getElementById('loadingOverlay').style.display = 'none';
         checkLogin();
