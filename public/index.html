@@ -4519,7 +4519,7 @@
 
     async function init() {
         const vEl = document.getElementById('appVersion');
-        if (vEl) vEl.textContent = 'v2026.09.12';
+        if (vEl) vEl.textContent = 'v2026.09.13';
         await _loadFromServer();
         document.getElementById('loadingOverlay').style.display = 'none';
         checkLogin();
@@ -4621,6 +4621,16 @@
             }
             mulaiQrReader(_qrReaderId, _qrStatusEl, _qrListEl);
         }, 900);
+    }
+
+    function _goToLiveScan() {
+        if (!isAdminUser()) { _qrResumeScan(); return; }
+        hentikanQr();
+        const menuLive = document.querySelector('.menu-item[onclick*="liveScan"]');
+        showPage('liveScan', menuLive);
+        if (typeof startLiveFeed === 'function') {
+            setTimeout(function() { startLiveFeed(); }, 300);
+        }
     }
 
     function mulaiQrReader(readerId, statusEl, listEl) {
@@ -4769,10 +4779,10 @@
             simpanSatuAbsensi(nisn, 'Hadir', 'Scan QR ' + jam, tgl);
             renderScanListLive();
             if (_qrStatusEl) {
-                _qrStatusEl.textContent = '✅ ' + siswa.nama + ' Berhasil absen. Menunggu scan berikutnya...';
+                _qrStatusEl.textContent = '✅ ' + siswa.nama + ' Berhasil absen. Menuju Live Scan...';
                 _qrStatusEl.style.color = '#0f9d58';
             }
-            _qrResumeScan();
+            _goToLiveScan();
             return;
         }
 
