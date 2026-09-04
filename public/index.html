@@ -820,18 +820,8 @@
                     <div style="margin-bottom:10px; font-size:0.85em; color:#555;">
                         Tanggal absen: <strong id="scanTglInfoPage"></strong> — arahkan kamera ke kartu QR siswa. Scan otomatis menandai <strong>Hadir</strong>. Setiap siswa hanya bisa absen <strong>1 kali per hari</strong> (ubah lewat aplikasi).
                     </div>
-                    <div style="display:flex; gap:16px; flex-wrap:wrap;">
-                        <div style="flex:1; min-width:300px;">
-                            <div id="qr-reader-page" style="width:100%;"></div>
-                            <div id="scanStatusPage" class="qr-scan-status" style="color:#666;">Klik "Mulai Scan" untuk mengaktifkan kamera.</div>
-                        </div>
-                        <div style="flex:1; min-width:280px;">
-                            <div style="font-weight:700; color:#333; margin-bottom:8px;">📋 Siswa Ter-scan Hari Ini (Live)</div>
-                            <div id="scanListPageLive" style="max-height:360px; overflow-y:auto; border:1px solid #e0e0e0; border-radius:8px; padding:8px;">
-                                <div style="color:#999; font-size:0.9em; text-align:center; padding:20px;">Belum ada scan. Arahkan kartu QR siswa ke kamera.</div>
-                            </div>
-                        </div>
-                    </div>
+                    <div id="qr-reader-page" style="width:100%;"></div>
+                    <div id="scanStatusPage" class="qr-scan-status" style="color:#666;">Klik "Mulai Scan" untuk mengaktifkan kamera.</div>
                     <div id="scanListPage" style="display:none;"></div>
                 </div>
             </div>
@@ -2013,7 +2003,6 @@
                 }
                 document.getElementById('scanTglInfoPage').textContent = document.getElementById('scanTglAbsen').value;
                 _qrTgl = document.getElementById('scanTglAbsen').value;
-                renderScanListLive();
                 _camerasList();
                 break;
             case 'nilai': renderNilaiInline(); break;
@@ -4519,7 +4508,7 @@
 
     async function init() {
         const vEl = document.getElementById('appVersion');
-        if (vEl) vEl.textContent = 'v2026.09.16';
+        if (vEl) vEl.textContent = 'v2026.09.17';
         await _loadFromServer();
         document.getElementById('loadingOverlay').style.display = 'none';
         checkLogin();
@@ -4679,38 +4668,13 @@
         if (!tgl) { alert('Pilih tanggal terlebih dahulu!'); return; }
         _qrTgl = tgl;
         document.getElementById('scanTglInfoPage').textContent = tgl;
-        renderScanListLive();
-        mulaiQrReader('qr-reader-page', document.getElementById('scanStatusPage'), document.getElementById('scanListPageLive'));
-    }
-
-    function renderScanListLive() {
-        const el = document.getElementById('scanListPageLive');
-        if (!el) return;
-        const tgl = _qrTgl || document.getElementById('scanTglAbsen').value || getTodayStr();
-        const rows = getData('absensi').filter(a => a.tanggal === tgl);
-        rows.sort(function(a, b) { return ((b.waktu || '') + (b.id || '')).localeCompare((a.waktu || '') + (a.id || '')); });
-        if (rows.length === 0) {
-            el.innerHTML = '<div style="color:#999; font-size:0.9em; text-align:center; padding:20px;">Belum ada scan. Arahkan kartu QR siswa ke kamera.</div>';
-            return;
-        }
-        el.innerHTML = '<div style="font-size:0.8em; color:#888; margin-bottom:6px;">Total: <strong>' + rows.length + '</strong></div>'
-            + rows.map(function(a) {
-                const st = (a.status || 'Hadir').toLowerCase();
-                const badge = { hadir:'#2e7d32', sakit:'#e65100', izin:'#1565c0', alpa:'#c62828' }[st] || '#2e7d32';
-                let t = a.waktu || '';
-                if (t) { try { const d = new Date(t); t = d.toLocaleTimeString('id-ID', {hour:'2-digit',minute:'2-digit'}); } catch(e) {} }
-                return '<div style="display:flex; align-items:center; justify-content:space-between; padding:6px 8px; border-bottom:1px solid #eee; font-size:0.9em;">'
-                    + '<span><strong>' + getNamaSiswa(a.nisn) + '</strong> <span style="color:#888; font-size:0.8em;">' + (a.keterangan || '') + '</span></span>'
-                    + '<span style="color:' + badge + '; font-weight:700;">' + (a.status || 'Hadir') + ' · ' + t + '</span>'
-                    + '</div>';
-            }).join('');
+        mulaiQrReader('qr-reader-page', document.getElementById('scanStatusPage'), document.getElementById('scanListPage'));
     }
 
     function scanTglChange() {
         const el = document.getElementById('scanTglInfoPage');
         if (el) el.textContent = document.getElementById('scanTglAbsen').value || '';
         _qrTgl = document.getElementById('scanTglAbsen').value || '';
-        renderScanListLive();
     }
 
     function scanKelasChange() {
@@ -4760,14 +4724,12 @@
         if (_qrReaderId === 'qr-reader-page') {
             if (sudahAda) {
                 tambahScanList(siswa.nama + ' (Kelas ' + siswa.kelas + ')', '⚠️ Sudah absen', 'err');
-                renderScanListLive();
                 _qrResumeScan();
                 return;
             }
             berhentiSementara();
             const jam = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
             simpanSatuAbsensi(nisn, 'Hadir', 'Scan QR ' + jam, tgl);
-            renderScanListLive();
             if (_qrStatusEl) {
                 _qrStatusEl.textContent = '✅ ' + siswa.nama + ' Berhasil absen. Menunggu scan berikutnya...';
                 _qrStatusEl.style.color = '#0f9d58';
