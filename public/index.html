@@ -303,6 +303,21 @@
         #page-liveScan .ls-status.izin { background:#1565c0; color:white; }
         #page-liveScan .ls-status.alpa { background:#c62828; color:white; }
         #page-liveScan .ls-ket { font-size:0.85em; color:rgba(255,255,255,0.45); flex-shrink:0; max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        @keyframes lsCardIn { from { transform:scale(0.7) translateY(30px); opacity:0; } to { transform:scale(1) translateY(0); opacity:1; } }
+        @keyframes lsCardPop { 0% { transform:scale(1); } 50% { transform:scale(1.05); } 100% { transform:scale(1); } }
+        .ls-single { animation: lsCardIn 0.4s ease-out; }
+        .ls-single.ls-pop { animation: lsCardPop 0.5s ease-out; }
+        .ls-single .ls-icon { font-size:5em; margin-bottom:16px; }
+        .ls-single .ls-nama-big { font-size:2.2em; font-weight:800; color:white; margin-bottom:8px; }
+        .ls-single .ls-detail { font-size:1.1em; color:rgba(255,255,255,0.7); margin-bottom:6px; }
+        .ls-single .ls-detail strong { color:rgba(255,255,255,0.95); }
+        .ls-single .ls-status-badge { display:inline-block; font-size:1.4em; font-weight:800; padding:10px 36px; border-radius:30px; margin-top:12px; }
+        .ls-single .ls-status-badge.hadir { background:#2e7d32; color:white; }
+        .ls-single .ls-status-badge.sakit { background:#e65100; color:white; }
+        .ls-single .ls-status-badge.izin { background:#1565c0; color:white; }
+        .ls-single .ls-status-badge.alpa { background:#c62828; color:white; }
+        .ls-single .ls-time-big { font-size:1em; color:rgba(255,255,255,0.4); margin-top:16px; font-family:monospace; }
+        .ls-single .ls-ket-big { font-size:0.95em; color:rgba(255,255,255,0.5); margin-top:6px; }
         .live-scan-mode .sidebar { display:none !important; }
         .live-scan-mode .main-content { padding:0 !important; overflow:hidden !important; }
         .live-scan-mode .container { overflow:hidden !important; }
@@ -566,8 +581,10 @@
                         <div style="color:rgba(255,255,255,0.85);font-size:0.9em;margin-top:4px;">⚠️ Alpa</div>
                     </div>
                 </div>
-                <div style="flex:1;overflow-y:auto;padding:0 24px 24px;" id="liveScanListBig">
-                    <div style="text-align:center;color:rgba(255,255,255,0.4);padding:60px 20px;font-size:1.3em;">Menunggu scan barcode...</div>
+                <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:0 24px 24px;overflow:hidden;" id="liveScanListBig">
+                    <div id="lsSingleCard" style="width:100%;max-width:500px;text-align:center;">
+                        <div style="color:rgba(255,255,255,0.3);font-size:1.4em;padding:40px;">Menunggu scan barcode...</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -2172,25 +2189,29 @@
             const listBig = document.getElementById('liveScanListBig');
             if (listBig) {
                 const filtered = _lsFilter ? _liveScanEntries.filter(e => e.status === _lsFilter) : _liveScanEntries;
-                if (filtered.length === 0) {
+                const latest = filtered.length > 0 ? filtered[0] : null;
+                if (!latest) {
                     const msg = _lsFilter ? 'Tidak ada siswa dengan status "' + _lsFilter + '"' : 'Menunggu scan barcode...';
-                    listBig.innerHTML = '<div style="text-align:center;color:rgba(255,255,255,0.4);padding:60px 20px;font-size:1.3em;">' + msg + '</div>';
+                    listBig.innerHTML = '<div id="lsSingleCard" style="width:100%;max-width:500px;text-align:center;"><div style="color:rgba(255,255,255,0.3);font-size:1.4em;padding:40px;">' + msg + '</div></div>';
                 } else {
-                    listBig.innerHTML = filtered.map((e) => {
-                        const nama = getNamaSiswa(e.nisn);
-                        const kelas = getKelasSiswa(e.nisn);
-                        let t = e.time;
-                        if (t) { try { const d = new Date(t); t = d.toLocaleTimeString('id-ID', {hour:'2-digit',minute:'2-digit',second:'2-digit'}); } catch(ex) {} }
-                        const sc = e.status.toLowerCase();
-                        const isNew = _lsNewIds.has(e.id);
-                        return '<div class="ls-item' + (isNew ? ' ls-new' : '') + '">'
-                            + '<span class="ls-time">' + (t || '-') + '</span>'
-                            + '<span class="ls-nama">' + nama + '</span>'
-                            + '<span class="ls-kelas">Kelas ' + kelas + '</span>'
-                            + '<span class="ls-status ' + sc + '">' + e.status + '</span>'
-                            + (e.ket && e.ket !== '-' ? '<span class="ls-ket">' + e.ket + '</span>' : '')
-                            + '</div>';
-                    }).join('');
+                    const nama = getNamaSiswa(latest.nisn);
+                    const kelas = getKelasSiswa(latest.nisn);
+                    let t = latest.time;
+                    if (t) { try { const d = new Date(t); t = d.toLocaleTimeString('id-ID', {hour:'2-digit',minute:'2-digit',second:'2-digit'}); } catch(ex) {} }
+                    const sc = latest.status.toLowerCase();
+                    const iconMap = { hadir:'✅', sakit:'🤒', izin:'📝', alpa:'⚠️' };
+                    const isNew = _lsNewIds.has(latest.id);
+                    const existing = document.getElementById('lsSingleCard');
+                    const samePerson = existing && existing.getAttribute('data-nisn') === latest.nisn && existing.getAttribute('data-status') === latest.status;
+                    listBig.innerHTML = '<div id="lsSingleCard" class="ls-single' + (samePerson ? ' ls-pop' : '') + '" data-nisn="' + latest.nisn + '" data-status="' + latest.status + '" style="width:100%;max-width:500px;text-align:center;background:rgba(255,255,255,0.06);border-radius:24px;padding:40px 32px;border:2px solid rgba(255,255,255,0.1);backdrop-filter:blur(10px);">'
+                        + '<div class="ls-icon">' + (iconMap[sc] || '📋') + '</div>'
+                        + '<div class="ls-nama-big">' + nama + '</div>'
+                        + '<div class="ls-detail">NISN: <strong>' + latest.nisn + '</strong></div>'
+                        + '<div class="ls-detail">Kelas: <strong>' + kelas + '</strong></div>'
+                        + '<div class="ls-status-badge ' + sc + '">' + latest.status + '</div>'
+                        + (latest.ket && latest.ket !== '-' ? '<div class="ls-ket-big">Keterangan: ' + latest.ket + '</div>' : '')
+                        + '<div class="ls-time-big">' + (t || '') + ' · ' + formatTanggalIndo(today) + '</div>'
+                        + '</div>';
                 }
             }
         }
@@ -4285,7 +4306,7 @@
 
     async function init() {
         const vEl = document.getElementById('appVersion');
-        if (vEl) vEl.textContent = 'v2026.08.27';
+        if (vEl) vEl.textContent = 'v2026.08.28';
         await _loadFromServer();
         document.getElementById('loadingOverlay').style.display = 'none';
         checkLogin();
