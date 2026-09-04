@@ -809,6 +809,9 @@
                             <option value="5">Kelas 5</option>
                             <option value="6">Kelas 6</option>
                         </select>
+                        <select id="pilihKameraScan" class="form-control" style="width:auto;" onchange="pilihKameraChange()">
+                            <option value="auto">Otomatis (Kamera)</option>
+                        </select>
                         <button class="btn btn-primary" onclick="mulaiScanQR()">📷 Mulai Scan</button>
                         <button class="btn btn-danger" onclick="hentikanQr()">⏹️ Berhenti</button>
                     </div>
@@ -1999,6 +2002,7 @@
                     document.getElementById('scanTglAbsen').value = getTodayStr();
                 }
                 document.getElementById('scanTglInfoPage').textContent = document.getElementById('scanTglAbsen').value;
+                _camerasList();
                 break;
             case 'nilai': renderNilaiInline(); break;
             case 'rekapAbsensi':
@@ -4503,7 +4507,7 @@
 
     async function init() {
         const vEl = document.getElementById('appVersion');
-        if (vEl) vEl.textContent = 'v2026.09.09';
+        if (vEl) vEl.textContent = 'v2026.09.10';
         await _loadFromServer();
         document.getElementById('loadingOverlay').style.display = 'none';
         checkLogin();
@@ -4550,6 +4554,37 @@
         }
     }
 
+    function _camerasList() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
+        navigator.mediaDevices.enumerateDevices().then(function(devices) {
+            const sel = document.getElementById('pilihKameraScan');
+            if (!sel) return;
+            const cams = devices.filter(d => d.kind === 'videoinput');
+            const cur = sel.value;
+            sel.innerHTML = '<option value="auto">Otomatis (Terbaik)</option>';
+            cams.forEach((c, i) => {
+                const label = c.label || ('Kamera ' + (i + 1));
+                sel.innerHTML += '<option value="' + c.deviceId + '">' + label + '</option>';
+            });
+            if (cur && Array.from(sel.options).some(o => o.value === cur)) sel.value = cur;
+        }).catch(function() {});
+    }
+
+    function pilihKameraChange() {
+        const started = _qrScanner && typeof _qrScanner.isScanning === 'function' && _qrScanner.isScanning();
+        if (started) {
+            hentikanQr();
+            mulaiScanQR();
+        }
+    }
+
+    function _cameraConfig() {
+        const sel = document.getElementById('pilihKameraScan');
+        const v = sel ? sel.value : '';
+        if (!v || v === 'auto') return { facingMode: 'environment' };
+        return { deviceId: { exact: v } };
+    }
+
     function berhentiSementara() {
         if (_qrScanner) {
             try { _qrScanner.stop().catch(() => {}); } catch (e) {}
@@ -4580,14 +4615,31 @@
         statusEl.style.color = '#666';
         listEl.innerHTML = '';
         _qrScanner = new Html5Qrcode(readerId);
+        const cfg = _cameraConfig();
         _qrScanner.start(
-            { facingMode: 'environment' },
+            cfg,
             { fps: 10, qrbox: { width: 220, height: 220 } },
             onQRDecoded,
             () => {}
-        ).catch(err => {
-            statusEl.textContent = '❌ Kamera tidak bisa dibuka: ' + err;
-            statusEl.style.color = '#c62828';
+        ).catch(function(err) {
+            if (JSON.stringify(cfg).indexOf('facingMode') !== -1) {
+                statusEl.textContent = 'Kamera belakang tidak tersedia, mencoba kamera depan/PC...';
+                statusEl.style.color = '#f4b400';
+                try { _qrScanner.stop().catch(() => {}); } catch (e) {}
+                _qrScanner = new Html5Qrcode(readerId);
+                _qrScanner.start(
+                    { facingMode: 'user' },
+                    { fps: 10, qrbox: { width: 220, height: 220 } },
+                    onQRDecoded,
+                    () => {}
+                ).catch(function(err2) {
+                    statusEl.textContent = '❌ Kamera tidak bisa dibuka: ' + err2;
+                    statusEl.style.color = '#c62828';
+                });
+            } else {
+                statusEl.textContent = '❌ Kamera tidak bisa dibuka: ' + err;
+                statusEl.style.color = '#c62828';
+            }
         });
     }
 
