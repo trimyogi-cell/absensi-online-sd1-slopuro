@@ -2178,6 +2178,7 @@
     let _lsNewIds = new Set();
     let _lsFilter = '';
     let _lsWelcomeTimer = null;
+    let _lsShowWelcome = true;
 
     function tutupLiveScan() {
         const menuDashboard = document.querySelector('.menu-item[onclick*="dashboard"]');
@@ -2227,6 +2228,7 @@
         _liveScanEntries = [];
         _lsNewIds = new Set();
         _lsFilter = '';
+        _lsShowWelcome = true;
         if (_lsWelcomeTimer) { clearTimeout(_lsWelcomeTimer); _lsWelcomeTimer = null; }
         document.querySelectorAll('.ls-stat-card').forEach(c => c.classList.remove('ls-stat-active'));
         const allCard = document.getElementById('lsCardAll');
@@ -2239,16 +2241,20 @@
     function _showWelcome() {
         const listBig = document.getElementById('liveScanListBig');
         if (!listBig) return;
+        const logo = getLogo();
+        const logoHtml = logo ? '<img src="' + logo + '" alt="Logo" style="max-height:80px;margin-bottom:16px;">' : '<div style="font-size:3em;margin-bottom:16px;">🏫</div>';
         listBig.innerHTML = '<div id="lsSingleCard" style="width:100%;max-width:500px;text-align:center;">'
-            + '<div style="font-size:3em;margin-bottom:16px;">🏫</div>'
+            + logoHtml
             + '<div style="color:#1a237e;font-size:1.8em;font-weight:800;margin-bottom:8px;">SELAMAT DATANG</div>'
             + '<div style="color:#1565c0;font-size:1.1em;font-weight:600;">DI SD N 1 SELOPURO</div>'
             + '</div>';
     }
 
     function _lsResetWelcomeTimer() {
+        _lsShowWelcome = false;
         if (_lsWelcomeTimer) clearTimeout(_lsWelcomeTimer);
         _lsWelcomeTimer = setTimeout(function() {
+            _lsShowWelcome = true;
             if (_lsFilter === '') _showWelcome();
         }, 3000);
     }
@@ -2273,6 +2279,7 @@
                 absensi.forEach(a => {
                     _liveScanEntries.unshift({ nisn: a.nisn, status: a.status, ket: a.keterangan || '', time: a.waktu || '', id: a.nisn + '|' + a.status });
                 });
+                if (_liveScanEntries.length > 0) _lsResetWelcomeTimer();
             } else {
                 const oldSet = new Set(oldKey ? oldKey.split(',') : []);
                 _lsNewIds = new Set();
@@ -2284,7 +2291,7 @@
                     }
                 });
                 setTimeout(() => { _lsNewIds = new Set(); }, 3000);
-                if (_lsNewIds.size > 0) _lsBeep();
+                if (_lsNewIds.size > 0) { _lsBeep(); _lsResetWelcomeTimer(); }
             }
             if (_liveScanEntries.length > 50) _liveScanEntries = _liveScanEntries.slice(0, 50);
         }
@@ -2304,28 +2311,31 @@
         if (!listBig) return;
 
         if (!_lsFilter) {
-            const latest = _liveScanEntries.length > 0 ? _liveScanEntries[0] : null;
-            if (!latest) {
+            if (_lsShowWelcome) {
                 _showWelcome();
             } else {
-                const nama = getNamaSiswa(latest.nisn);
-                const kelas = getKelasSiswa(latest.nisn);
-                let t = latest.time;
-                if (t) { try { const d = new Date(t); t = d.toLocaleTimeString('id-ID', {hour:'2-digit',minute:'2-digit',second:'2-digit'}); } catch(ex) {} }
-                const sc = latest.status.toLowerCase();
-                const iconMap = { hadir:'✅', sakit:'🤒', izin:'📝', alpa:'⚠️' };
-                const existing = document.getElementById('lsSingleCard');
-                const samePerson = existing && existing.getAttribute('data-nisn') === latest.nisn && existing.getAttribute('data-status') === latest.status;
-                listBig.innerHTML = '<div id="lsSingleCard" class="ls-single' + (samePerson ? ' ls-pop' : '') + '" data-nisn="' + latest.nisn + '" data-status="' + latest.status + '" style="width:100%;max-width:500px;text-align:center;background:white;border-radius:24px;padding:40px 32px;border:2px solid rgba(0,0,0,0.06);box-shadow:0 8px 32px rgba(0,0,0,0.08);">'
-                    + '<div class="ls-icon">' + (iconMap[sc] || '📋') + '</div>'
-                    + '<div class="ls-nama-big">' + nama + '</div>'
-                    + '<div class="ls-detail">NISN: <strong>' + latest.nisn + '</strong></div>'
-                    + '<div class="ls-detail">Kelas: <strong>' + kelas + '</strong></div>'
-                    + '<div class="ls-status-badge ' + sc + '">' + latest.status + '</div>'
-                    + (latest.ket && latest.ket !== '-' ? '<div class="ls-ket-big">Keterangan: ' + latest.ket + '</div>' : '')
-                    + '<div class="ls-time-big">' + (t || '') + ' · ' + formatTanggalIndo(today) + '</div>'
-                    + '</div>';
-                _lsResetWelcomeTimer();
+                const latest = _liveScanEntries.length > 0 ? _liveScanEntries[0] : null;
+                if (!latest) {
+                    _showWelcome();
+                } else {
+                    const nama = getNamaSiswa(latest.nisn);
+                    const kelas = getKelasSiswa(latest.nisn);
+                    let t = latest.time;
+                    if (t) { try { const d = new Date(t); t = d.toLocaleTimeString('id-ID', {hour:'2-digit',minute:'2-digit',second:'2-digit'}); } catch(ex) {} }
+                    const sc = latest.status.toLowerCase();
+                    const iconMap = { hadir:'✅', sakit:'🤒', izin:'📝', alpa:'⚠️' };
+                    const existing = document.getElementById('lsSingleCard');
+                    const samePerson = existing && existing.getAttribute('data-nisn') === latest.nisn && existing.getAttribute('data-status') === latest.status;
+                    listBig.innerHTML = '<div id="lsSingleCard" class="ls-single' + (samePerson ? ' ls-pop' : '') + '" data-nisn="' + latest.nisn + '" data-status="' + latest.status + '" style="width:100%;max-width:500px;text-align:center;background:white;border-radius:24px;padding:40px 32px;border:2px solid rgba(0,0,0,0.06);box-shadow:0 8px 32px rgba(0,0,0,0.08);">'
+                        + '<div class="ls-icon">' + (iconMap[sc] || '📋') + '</div>'
+                        + '<div class="ls-nama-big">' + nama + '</div>'
+                        + '<div class="ls-detail">NISN: <strong>' + latest.nisn + '</strong></div>'
+                        + '<div class="ls-detail">Kelas: <strong>' + kelas + '</strong></div>'
+                        + '<div class="ls-status-badge ' + sc + '">' + latest.status + '</div>'
+                        + (latest.ket && latest.ket !== '-' ? '<div class="ls-ket-big">Keterangan: ' + latest.ket + '</div>' : '')
+                        + '<div class="ls-time-big">' + (t || '') + ' · ' + formatTanggalIndo(today) + '</div>'
+                        + '</div>';
+                }
             }
         } else {
             const filtered = _liveScanEntries.filter(e => e.status === _lsFilter);
@@ -4490,7 +4500,7 @@
 
     async function init() {
         const vEl = document.getElementById('appVersion');
-        if (vEl) vEl.textContent = 'v2026.09.04';
+        if (vEl) vEl.textContent = 'v2026.09.05';
         await _loadFromServer();
         document.getElementById('loadingOverlay').style.display = 'none';
         checkLogin();
