@@ -318,6 +318,14 @@
         .ls-single .ls-status-badge.alpa { background:#c62828; color:white; }
         .ls-single .ls-time-big { font-size:1em; color:rgba(255,255,255,0.4); margin-top:16px; font-family:monospace; }
         .ls-single .ls-ket-big { font-size:0.95em; color:rgba(255,255,255,0.5); margin-top:6px; }
+        #page-liveScan .ls-list-item { display:flex; align-items:center; gap:14px; padding:12px 18px; border-bottom:1px solid rgba(255,255,255,0.06); border-radius:10px; margin-bottom:3px; transition:background 0.2s; }
+        #page-liveScan .ls-list-item:nth-child(odd) { background:rgba(255,255,255,0.04); }
+        #page-liveScan .ls-list-item:nth-child(even) { background:rgba(255,255,255,0.07); }
+        #page-liveScan .ls-list-item.ls-new { background:rgba(76,175,80,0.2); box-shadow:0 0 12px rgba(76,175,80,0.25); }
+        #page-liveScan .ls-list-time { font-size:0.85em; color:rgba(255,255,255,0.4); flex-shrink:0; min-width:65px; font-family:monospace; }
+        #page-liveScan .ls-list-nama { font-size:1.05em; font-weight:700; color:white; flex:1; min-width:0; }
+        #page-liveScan .ls-list-kelas { font-size:0.85em; color:rgba(255,255,255,0.5); flex-shrink:0; }
+        #page-liveScan .ls-list-ket { font-size:0.8em; color:rgba(255,255,255,0.35); flex-shrink:0; max-width:100px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
         .live-scan-mode .sidebar { display:none !important; }
         .live-scan-mode .main-content { padding:0 !important; overflow:hidden !important; }
         .live-scan-mode .container { overflow:hidden !important; }
@@ -474,18 +482,6 @@
                     </div>
                 </div>
             </div>
-            <div class="card" id="liveScanCard" style="margin-bottom:20px;display:none;">
-                <div class="card-header" style="background:linear-gradient(135deg,#e8f5e9,#c8e6c9);border-bottom:1px solid #a5d6a7;">
-                    <h2 style="display:flex;align-items:center;gap:8px;">
-                        <span id="liveScanDot" style="width:10px;height:10px;border-radius:50%;background:#4caf50;display:inline-block;animation:livePulse 1.5s infinite;"></span>
-                        Live Scan
-                        <span id="liveScanCount" style="font-size:0.7em;color:#666;font-weight:400;">0 scan hari ini</span>
-                    </h2>
-                </div>
-                <div class="card-body" style="max-height:220px;overflow-y:auto;padding:8px 12px;" id="liveScanBody">
-                    <div style="text-align:center;color:#999;padding:16px;">Menunggu scan barcode...</div>
-                </div>
-            </div>
             <div class="stats-row">
                 <div class="stat-card">
                     <div class="stat-number" id="totalSiswa">0</div>
@@ -557,7 +553,7 @@
                         <h1 style="color:white;font-size:1.5em;margin:0;">🔴 LIVE SCAN ABSENSI</h1>
                         <span id="liveScanDateBig" style="color:rgba(255,255,255,0.7);font-size:0.9em;"></span>
                     </div>
-                    <button onclick="showPage('dashboard',document.querySelector('.menu-item[onclick*=dashboard]))" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:white;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:0.9em;">✕ Tutup</button>
+                    <button onclick="tutupLiveScan()" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:white;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:0.9em;">✕ Tutup</button>
                 </div>
                 <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;padding:16px 24px;flex-shrink:0;">
                     <div onclick="setLsFilter('')" id="lsCardAll" class="ls-stat-card ls-stat-active" style="background:linear-gradient(135deg,#37474f,#546e7a);border-radius:14px;padding:18px 16px;text-align:center;cursor:pointer;transition:all 0.3s;border:2px solid transparent;">
@@ -1887,7 +1883,7 @@
         if (el) el.classList.add('active');
         if (page !== 'scanQR' && typeof hentikanQr === 'function') hentikanQr();
         refreshPage(page);
-        if (page === 'dashboard') startLiveFeed(); else if (page === 'liveScan') startLiveFeed(); else stopLiveFeed();
+        if (page === 'liveScan') startLiveFeed(); else stopLiveFeed();
         const container = document.querySelector('.container');
         if (container) {
             if (page === 'liveScan') container.classList.add('live-scan-mode');
@@ -2104,6 +2100,11 @@
     let _lsNewIds = new Set();
     let _lsFilter = '';
 
+    function tutupLiveScan() {
+        const menuDashboard = document.querySelector('.menu-item[onclick*="dashboard"]');
+        showPage('dashboard', menuDashboard);
+    }
+
     function setLsFilter(status) {
         _lsFilter = status;
         document.querySelectorAll('.ls-stat-card').forEach(c => c.classList.remove('ls-stat-active'));
@@ -2128,9 +2129,10 @@
         _lastScanNisns = '';
         _liveScanEntries = [];
         _lsNewIds = new Set();
-        const card = document.getElementById('liveScanCard');
-        const bigPage = document.getElementById('page-liveScan');
-        if (card) card.style.display = (bigPage && bigPage.classList.contains('active')) ? 'none' : '';
+        _lsFilter = '';
+        document.querySelectorAll('.ls-stat-card').forEach(c => c.classList.remove('ls-stat-active'));
+        const allCard = document.getElementById('lsCardAll');
+        if (allCard) allCard.classList.add('ls-stat-active');
         updateLiveFeed();
         _liveFeedTimer = setInterval(updateLiveFeed, 2000);
         _lsPollTimer = setInterval(_lsPollAbsensi, 2000);
@@ -2139,8 +2141,6 @@
     function stopLiveFeed() {
         if (_liveFeedTimer) { clearInterval(_liveFeedTimer); _liveFeedTimer = null; }
         if (_lsPollTimer) { clearInterval(_lsPollTimer); _lsPollTimer = null; }
-        const card = document.getElementById('liveScanCard');
-        if (card) card.style.display = 'none';
     }
 
     function updateLiveFeed() {
@@ -2149,9 +2149,7 @@
         const absensi = getData('absensi').filter(a => a.tanggal === today);
         const curKey = absensi.map(a => a.nisn + '|' + a.status).sort().join(',');
         const isBigPage = document.getElementById('page-liveScan') && document.getElementById('page-liveScan').classList.contains('active');
-        const isDashPage = document.getElementById('page-dashboard') && document.getElementById('page-dashboard').classList.contains('active');
-        const countEl = document.getElementById('liveScanCount');
-        if (countEl) countEl.textContent = absensi.length + ' scan hari ini';
+        if (!isBigPage) return;
 
         if (curKey !== _lastScanNisns) {
             const oldKey = _lastScanNisns;
@@ -2175,72 +2173,66 @@
             if (_liveScanEntries.length > 50) _liveScanEntries = _liveScanEntries.slice(0, 50);
         }
 
-        if (isBigPage) {
-            const hadir = absensi.filter(a => a.status === 'Hadir').length;
-            const sakit = absensi.filter(a => a.status === 'Sakit').length;
-            const izin = absensi.filter(a => a.status === 'Izin').length;
-            const alpa = absensi.filter(a => a.status === 'Alpa').length;
-            document.getElementById('lsTotal').textContent = absensi.length;
-            document.getElementById('lsHadir').textContent = hadir;
-            document.getElementById('lsSakit').textContent = sakit;
-            document.getElementById('lsIzin').textContent = izin;
-            document.getElementById('lsAlpa').textContent = alpa;
-            document.getElementById('liveScanDateBig').textContent = formatTanggalIndo(today);
-            const listBig = document.getElementById('liveScanListBig');
-            if (listBig) {
-                const filtered = _lsFilter ? _liveScanEntries.filter(e => e.status === _lsFilter) : _liveScanEntries;
-                const latest = filtered.length > 0 ? filtered[0] : null;
-                if (!latest) {
-                    const msg = _lsFilter ? 'Tidak ada siswa dengan status "' + _lsFilter + '"' : 'Menunggu scan barcode...';
-                    listBig.innerHTML = '<div id="lsSingleCard" style="width:100%;max-width:500px;text-align:center;"><div style="color:rgba(255,255,255,0.3);font-size:1.4em;padding:40px;">' + msg + '</div></div>';
-                } else {
-                    const nama = getNamaSiswa(latest.nisn);
-                    const kelas = getKelasSiswa(latest.nisn);
-                    let t = latest.time;
-                    if (t) { try { const d = new Date(t); t = d.toLocaleTimeString('id-ID', {hour:'2-digit',minute:'2-digit',second:'2-digit'}); } catch(ex) {} }
-                    const sc = latest.status.toLowerCase();
-                    const iconMap = { hadir:'✅', sakit:'🤒', izin:'📝', alpa:'⚠️' };
-                    const isNew = _lsNewIds.has(latest.id);
-                    const existing = document.getElementById('lsSingleCard');
-                    const samePerson = existing && existing.getAttribute('data-nisn') === latest.nisn && existing.getAttribute('data-status') === latest.status;
-                    listBig.innerHTML = '<div id="lsSingleCard" class="ls-single' + (samePerson ? ' ls-pop' : '') + '" data-nisn="' + latest.nisn + '" data-status="' + latest.status + '" style="width:100%;max-width:500px;text-align:center;background:rgba(255,255,255,0.06);border-radius:24px;padding:40px 32px;border:2px solid rgba(255,255,255,0.1);backdrop-filter:blur(10px);">'
-                        + '<div class="ls-icon">' + (iconMap[sc] || '📋') + '</div>'
-                        + '<div class="ls-nama-big">' + nama + '</div>'
-                        + '<div class="ls-detail">NISN: <strong>' + latest.nisn + '</strong></div>'
-                        + '<div class="ls-detail">Kelas: <strong>' + kelas + '</strong></div>'
-                        + '<div class="ls-status-badge ' + sc + '">' + latest.status + '</div>'
-                        + (latest.ket && latest.ket !== '-' ? '<div class="ls-ket-big">Keterangan: ' + latest.ket + '</div>' : '')
-                        + '<div class="ls-time-big">' + (t || '') + ' · ' + formatTanggalIndo(today) + '</div>'
-                        + '</div>';
-                }
-            }
-        }
+        const hadir = absensi.filter(a => a.status === 'Hadir').length;
+        const sakit = absensi.filter(a => a.status === 'Sakit').length;
+        const izin = absensi.filter(a => a.status === 'Izin').length;
+        const alpa = absensi.filter(a => a.status === 'Alpa').length;
+        document.getElementById('lsTotal').textContent = absensi.length;
+        document.getElementById('lsHadir').textContent = hadir;
+        document.getElementById('lsSakit').textContent = sakit;
+        document.getElementById('lsIzin').textContent = izin;
+        document.getElementById('lsAlpa').textContent = alpa;
+        document.getElementById('liveScanDateBig').textContent = formatTanggalIndo(today);
 
-        if (isDashPage) {
-            const body = document.getElementById('liveScanBody');
-            const card = document.getElementById('liveScanCard');
-            if (card) card.style.display = '';
-            if (body) {
-                if (_liveScanEntries.length === 0) {
-                    body.innerHTML = '<div style="text-align:center;color:#999;padding:16px;">Menunggu scan barcode...</div>';
-                } else {
-                    body.innerHTML = _liveScanEntries.slice(0, 20).map((e) => {
-                        const nama = getNamaSiswa(e.nisn);
-                        const kelas = getKelasSiswa(e.nisn);
-                        let t = e.time;
-                        if (t) { try { const d = new Date(t); t = d.toLocaleTimeString('id-ID', {hour:'2-digit',minute:'2-digit'}); } catch(ex) {} }
-                        const sc = e.status.toLowerCase();
-                        return '<div class="live-feed-item">'
-                            + '<span class="lf-time">' + (t || '-') + '</span>'
-                            + '<span class="lf-name">' + nama + '</span>'
-                            + '<span class="lf-kelas">Kls ' + kelas + '</span>'
-                            + '<span class="lf-status ' + sc + '">' + e.status + '</span>'
-                            + (e.ket && e.ket !== '-' ? '<span class="lf-ket">' + e.ket + '</span>' : '')
-                            + '</div>';
-                    }).join('');
-                }
+        const listBig = document.getElementById('liveScanListBig');
+        if (!listBig) return;
+
+        if (!_lsFilter) {
+            const latest = _liveScanEntries.length > 0 ? _liveScanEntries[0] : null;
+            if (!latest) {
+                listBig.innerHTML = '<div id="lsSingleCard" style="width:100%;max-width:500px;text-align:center;"><div style="color:rgba(255,255,255,0.3);font-size:1.4em;padding:40px;">Menunggu scan barcode...</div></div>';
+            } else {
+                const nama = getNamaSiswa(latest.nisn);
+                const kelas = getKelasSiswa(latest.nisn);
+                let t = latest.time;
+                if (t) { try { const d = new Date(t); t = d.toLocaleTimeString('id-ID', {hour:'2-digit',minute:'2-digit',second:'2-digit'}); } catch(ex) {} }
+                const sc = latest.status.toLowerCase();
+                const iconMap = { hadir:'✅', sakit:'🤒', izin:'📝', alpa:'⚠️' };
+                const existing = document.getElementById('lsSingleCard');
+                const samePerson = existing && existing.getAttribute('data-nisn') === latest.nisn && existing.getAttribute('data-status') === latest.status;
+                listBig.innerHTML = '<div id="lsSingleCard" class="ls-single' + (samePerson ? ' ls-pop' : '') + '" data-nisn="' + latest.nisn + '" data-status="' + latest.status + '" style="width:100%;max-width:500px;text-align:center;background:rgba(255,255,255,0.06);border-radius:24px;padding:40px 32px;border:2px solid rgba(255,255,255,0.1);backdrop-filter:blur(10px);">'
+                    + '<div class="ls-icon">' + (iconMap[sc] || '📋') + '</div>'
+                    + '<div class="ls-nama-big">' + nama + '</div>'
+                    + '<div class="ls-detail">NISN: <strong>' + latest.nisn + '</strong></div>'
+                    + '<div class="ls-detail">Kelas: <strong>' + kelas + '</strong></div>'
+                    + '<div class="ls-status-badge ' + sc + '">' + latest.status + '</div>'
+                    + (latest.ket && latest.ket !== '-' ? '<div class="ls-ket-big">Keterangan: ' + latest.ket + '</div>' : '')
+                    + '<div class="ls-time-big">' + (t || '') + ' · ' + formatTanggalIndo(today) + '</div>'
+                    + '</div>';
             }
-            renderDashboardAbsensi();
+        } else {
+            const filtered = _liveScanEntries.filter(e => e.status === _lsFilter);
+            if (filtered.length === 0) {
+                listBig.innerHTML = '<div style="width:100%;max-width:600px;text-align:center;"><div style="color:rgba(255,255,255,0.3);font-size:1.3em;padding:40px;">Belum ada siswa dengan status <strong>' + _lsFilter + '</strong></div></div>';
+            } else {
+                let html = '<div style="width:100%;max-width:600px;"><div style="color:rgba(255,255,255,0.5);font-size:0.9em;margin-bottom:12px;font-weight:600;">' + _lsFilter + ' (' + filtered.length + ')</div>';
+                html += filtered.map((e) => {
+                    const nama = getNamaSiswa(e.nisn);
+                    const kelas = getKelasSiswa(e.nisn);
+                    let t = e.time;
+                    if (t) { try { const d = new Date(t); t = d.toLocaleTimeString('id-ID', {hour:'2-digit',minute:'2-digit',second:'2-digit'}); } catch(ex) {} }
+                    const sc = e.status.toLowerCase();
+                    const isNew = _lsNewIds.has(e.id);
+                    return '<div class="ls-list-item' + (isNew ? ' ls-new' : '') + '">'
+                        + '<span class="ls-list-time">' + (t || '-') + '</span>'
+                        + '<span class="ls-list-nama">' + nama + '</span>'
+                        + '<span class="ls-list-kelas">Kelas ' + kelas + '</span>'
+                        + (e.ket && e.ket !== '-' ? '<span class="ls-list-ket">' + e.ket + '</span>' : '')
+                        + '</div>';
+                }).join('');
+                html += '</div>';
+                listBig.innerHTML = html;
+            }
         }
     }
 
@@ -4306,7 +4298,7 @@
 
     async function init() {
         const vEl = document.getElementById('appVersion');
-        if (vEl) vEl.textContent = 'v2026.08.28';
+        if (vEl) vEl.textContent = 'v2026.08.29';
         await _loadFromServer();
         document.getElementById('loadingOverlay').style.display = 'none';
         checkLogin();
