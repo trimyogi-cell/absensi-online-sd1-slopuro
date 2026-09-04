@@ -2257,7 +2257,7 @@
         _lsWelcomeTimer = setTimeout(function() {
             _lsShowWelcome = true;
             if (_lsFilter === '') _showWelcome();
-        }, 3000);
+        }, 2000);
     }
 
     function stopLiveFeed() {
@@ -4501,7 +4501,7 @@
 
     async function init() {
         const vEl = document.getElementById('appVersion');
-        if (vEl) vEl.textContent = 'v2026.09.18';
+        if (vEl) vEl.textContent = 'v2026.09.19';
         await _loadFromServer();
         document.getElementById('loadingOverlay').style.display = 'none';
         checkLogin();
