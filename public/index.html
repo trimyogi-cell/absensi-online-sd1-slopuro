@@ -303,6 +303,11 @@
         #page-liveScan .ls-status.izin { background:#1565c0; color:white; }
         #page-liveScan .ls-status.alpa { background:#c62828; color:white; }
         #page-liveScan .ls-ket { font-size:0.85em; color:rgba(255,255,255,0.45); flex-shrink:0; max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .live-scan-mode .sidebar { display:none !important; }
+        .live-scan-mode .main-content { padding:0 !important; overflow:hidden !important; }
+        .live-scan-mode .container { overflow:hidden !important; }
+        .ls-stat-card.ls-stat-active { border-color: #ffd54f !important; box-shadow: 0 0 20px rgba(255,213,79,0.4); transform: scale(1.05); }
+        .ls-stat-card:hover { transform: scale(1.03); box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
         @media (max-width:768px) {
             .live-feed-item .lf-kelas { display: none; }
             .live-feed-item .lf-ket { display: none; }
@@ -539,20 +544,24 @@
                     </div>
                     <button onclick="showPage('dashboard',document.querySelector('.menu-item[onclick*=dashboard]))" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:white;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:0.9em;">✕ Tutup</button>
                 </div>
-                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:16px 24px;flex-shrink:0;">
-                    <div style="background:linear-gradient(135deg,#1b5e20,#2e7d32);border-radius:14px;padding:18px 16px;text-align:center;">
+                <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;padding:16px 24px;flex-shrink:0;">
+                    <div onclick="setLsFilter('')" id="lsCardAll" class="ls-stat-card ls-stat-active" style="background:linear-gradient(135deg,#37474f,#546e7a);border-radius:14px;padding:18px 16px;text-align:center;cursor:pointer;transition:all 0.3s;border:2px solid transparent;">
+                        <div id="lsTotal" style="font-size:2.8em;font-weight:800;color:white;">0</div>
+                        <div style="color:rgba(255,255,255,0.85);font-size:0.9em;margin-top:4px;">📋 Semua</div>
+                    </div>
+                    <div onclick="setLsFilter('Hadir')" id="lsCardHadir" class="ls-stat-card" style="background:linear-gradient(135deg,#1b5e20,#2e7d32);border-radius:14px;padding:18px 16px;text-align:center;cursor:pointer;transition:all 0.3s;border:2px solid transparent;">
                         <div id="lsHadir" style="font-size:2.8em;font-weight:800;color:white;">0</div>
                         <div style="color:rgba(255,255,255,0.85);font-size:0.9em;margin-top:4px;">✅ Hadir</div>
                     </div>
-                    <div style="background:linear-gradient(135deg,#e65100,#f57c00);border-radius:14px;padding:18px 16px;text-align:center;">
+                    <div onclick="setLsFilter('Sakit')" id="lsCardSakit" class="ls-stat-card" style="background:linear-gradient(135deg,#e65100,#f57c00);border-radius:14px;padding:18px 16px;text-align:center;cursor:pointer;transition:all 0.3s;border:2px solid transparent;">
                         <div id="lsSakit" style="font-size:2.8em;font-weight:800;color:white;">0</div>
                         <div style="color:rgba(255,255,255,0.85);font-size:0.9em;margin-top:4px;">🤒 Sakit</div>
                     </div>
-                    <div style="background:linear-gradient(135deg,#1565c0,#1e88e5);border-radius:14px;padding:18px 16px;text-align:center;">
+                    <div onclick="setLsFilter('Izin')" id="lsCardIzin" class="ls-stat-card" style="background:linear-gradient(135deg,#1565c0,#1e88e5);border-radius:14px;padding:18px 16px;text-align:center;cursor:pointer;transition:all 0.3s;border:2px solid transparent;">
                         <div id="lsIzin" style="font-size:2.8em;font-weight:800;color:white;">0</div>
                         <div style="color:rgba(255,255,255,0.85);font-size:0.9em;margin-top:4px;">📝 Izin</div>
                     </div>
-                    <div style="background:linear-gradient(135deg,#b71c1c,#d32f2f);border-radius:14px;padding:18px 16px;text-align:center;">
+                    <div onclick="setLsFilter('Alpa')" id="lsCardAlpa" class="ls-stat-card" style="background:linear-gradient(135deg,#b71c1c,#d32f2f);border-radius:14px;padding:18px 16px;text-align:center;cursor:pointer;transition:all 0.3s;border:2px solid transparent;">
                         <div id="lsAlpa" style="font-size:2.8em;font-weight:800;color:white;">0</div>
                         <div style="color:rgba(255,255,255,0.85);font-size:0.9em;margin-top:4px;">⚠️ Alpa</div>
                     </div>
@@ -1862,6 +1871,11 @@
         if (page !== 'scanQR' && typeof hentikanQr === 'function') hentikanQr();
         refreshPage(page);
         if (page === 'dashboard') startLiveFeed(); else if (page === 'liveScan') startLiveFeed(); else stopLiveFeed();
+        const container = document.querySelector('.container');
+        if (container) {
+            if (page === 'liveScan') container.classList.add('live-scan-mode');
+            else container.classList.remove('live-scan-mode');
+        }
         if (window.innerWidth <= 768) {
             document.querySelector('.sidebar').classList.remove('show');
             var overlay = document.getElementById('sidebarOverlay');
@@ -2070,6 +2084,16 @@
     let _lastScanNisns = '';
     let _liveScanEntries = [];
     let _lsNewIds = new Set();
+    let _lsFilter = '';
+
+    function setLsFilter(status) {
+        _lsFilter = status;
+        document.querySelectorAll('.ls-stat-card').forEach(c => c.classList.remove('ls-stat-active'));
+        const idMap = { '': 'lsCardAll', 'Hadir': 'lsCardHadir', 'Sakit': 'lsCardSakit', 'Izin': 'lsCardIzin', 'Alpa': 'lsCardAlpa' };
+        const el = document.getElementById(idMap[status] || 'lsCardAll');
+        if (el) el.classList.add('ls-stat-active');
+        updateLiveFeed();
+    }
 
     function startLiveFeed() {
         stopLiveFeed();
@@ -2122,17 +2146,24 @@
         }
 
         if (isBigPage) {
-            document.getElementById('lsHadir').textContent = absensi.filter(a => a.status === 'Hadir').length;
-            document.getElementById('lsSakit').textContent = absensi.filter(a => a.status === 'Sakit').length;
-            document.getElementById('lsIzin').textContent = absensi.filter(a => a.status === 'Izin').length;
-            document.getElementById('lsAlpa').textContent = absensi.filter(a => a.status === 'Alpa').length;
+            const hadir = absensi.filter(a => a.status === 'Hadir').length;
+            const sakit = absensi.filter(a => a.status === 'Sakit').length;
+            const izin = absensi.filter(a => a.status === 'Izin').length;
+            const alpa = absensi.filter(a => a.status === 'Alpa').length;
+            document.getElementById('lsTotal').textContent = absensi.length;
+            document.getElementById('lsHadir').textContent = hadir;
+            document.getElementById('lsSakit').textContent = sakit;
+            document.getElementById('lsIzin').textContent = izin;
+            document.getElementById('lsAlpa').textContent = alpa;
             document.getElementById('liveScanDateBig').textContent = formatTanggalIndo(today);
             const listBig = document.getElementById('liveScanListBig');
             if (listBig) {
-                if (_liveScanEntries.length === 0) {
-                    listBig.innerHTML = '<div style="text-align:center;color:rgba(255,255,255,0.4);padding:60px 20px;font-size:1.3em;">Menunggu scan barcode...</div>';
+                const filtered = _lsFilter ? _liveScanEntries.filter(e => e.status === _lsFilter) : _liveScanEntries;
+                if (filtered.length === 0) {
+                    const msg = _lsFilter ? 'Tidak ada siswa dengan status "' + _lsFilter + '"' : 'Menunggu scan barcode...';
+                    listBig.innerHTML = '<div style="text-align:center;color:rgba(255,255,255,0.4);padding:60px 20px;font-size:1.3em;">' + msg + '</div>';
                 } else {
-                    listBig.innerHTML = _liveScanEntries.map((e) => {
+                    listBig.innerHTML = filtered.map((e) => {
                         const nama = getNamaSiswa(e.nisn);
                         const kelas = getKelasSiswa(e.nisn);
                         let t = e.time;
@@ -4241,7 +4272,7 @@
 
     async function init() {
         const vEl = document.getElementById('appVersion');
-        if (vEl) vEl.textContent = 'v2026.08.25';
+        if (vEl) vEl.textContent = 'v2026.08.26';
         await _loadFromServer();
         document.getElementById('loadingOverlay').style.display = 'none';
         checkLogin();
