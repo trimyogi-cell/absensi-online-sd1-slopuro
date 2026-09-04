@@ -418,21 +418,14 @@
         <div class="menu-item active" onclick="showPage('dashboard', this)">
             <span class="icon">🏠</span> Dashboard
         </div>
-        <div class="menu-group" id="menuGroupLiveScan">
-            <div class="menu-item menu-parent" onclick="toggleMenuGroup('menuGroupLiveScan')">
-                <span class="icon">🔴</span> Live Scan <span class="arrow">▶</span>
-            </div>
-            <div class="menu-children">
-                <div class="menu-item menu-child" onclick="showPage('liveScan', this)">
-                    <span class="icon">🔴</span> Live Scan
-                </div>
-                <div class="menu-item menu-child" onclick="showPage('siswa', this)">
-                    <span class="icon">👨‍🎓</span> Data Siswa
-                </div>
-                <div class="menu-item menu-child" onclick="showPage('scanQR', this)">
-                    <span class="icon">📷</span> Scan QR
-                </div>
-            </div>
+        <div class="menu-item" onclick="showPage('liveScan', this)">
+            <span class="icon">🔴</span> Live Scan
+        </div>
+        <div class="menu-item" onclick="showPage('siswa', this)">
+            <span class="icon">👨‍🎓</span> Data Siswa
+        </div>
+        <div class="menu-item" onclick="showPage('scanQR', this)">
+            <span class="icon">📷</span> Scan QR
         </div>
         <div class="menu-group" id="menuGroupInput">
             <div class="menu-item menu-parent" onclick="toggleMenuGroup('menuGroupInput')">
@@ -4508,7 +4501,7 @@
 
     async function init() {
         const vEl = document.getElementById('appVersion');
-        if (vEl) vEl.textContent = 'v2026.09.17';
+        if (vEl) vEl.textContent = 'v2026.09.18';
         await _loadFromServer();
         document.getElementById('loadingOverlay').style.display = 'none';
         checkLogin();
