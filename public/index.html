@@ -2081,6 +2081,7 @@
     }
 
     let _liveFeedTimer = null;
+    let _lsPollTimer = null;
     let _lastScanNisns = '';
     let _liveScanEntries = [];
     let _lsNewIds = new Set();
@@ -2095,6 +2096,16 @@
         updateLiveFeed();
     }
 
+    async function _lsPollAbsensi() {
+        try {
+            const val = await _sbGet('absensi');
+            if (Array.isArray(val)) {
+                _memStore['absensi'] = JSON.stringify(val);
+                updateLiveFeed();
+            }
+        } catch(e) { console.error('[LS-POLL]', e); }
+    }
+
     function startLiveFeed() {
         stopLiveFeed();
         _lastScanNisns = '';
@@ -2105,10 +2116,12 @@
         if (card) card.style.display = (bigPage && bigPage.classList.contains('active')) ? 'none' : '';
         updateLiveFeed();
         _liveFeedTimer = setInterval(updateLiveFeed, 2000);
+        _lsPollTimer = setInterval(_lsPollAbsensi, 2000);
     }
 
     function stopLiveFeed() {
         if (_liveFeedTimer) { clearInterval(_liveFeedTimer); _liveFeedTimer = null; }
+        if (_lsPollTimer) { clearInterval(_lsPollTimer); _lsPollTimer = null; }
         const card = document.getElementById('liveScanCard');
         if (card) card.style.display = 'none';
     }
@@ -4272,7 +4285,7 @@
 
     async function init() {
         const vEl = document.getElementById('appVersion');
-        if (vEl) vEl.textContent = 'v2026.08.26';
+        if (vEl) vEl.textContent = 'v2026.08.27';
         await _loadFromServer();
         document.getElementById('loadingOverlay').style.display = 'none';
         checkLogin();
