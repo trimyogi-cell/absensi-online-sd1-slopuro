@@ -298,42 +298,42 @@
         .live-feed-item .lf-status.izin { background:#e3f2fd; color:#1565c0; }
         .live-feed-item .lf-status.alpa { background:#fce4ec; color:#c62828; }
         .live-feed-item .lf-ket { font-size:0.75em; color:#999; flex-shrink:0; max-width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-        #page-liveScan .ls-item { display:flex; align-items:center; gap:16px; padding:14px 20px; border-bottom:1px solid rgba(255,255,255,0.07); animation: liveSlideIn 0.35s ease-out; border-radius:12px; margin-bottom:4px; transition: background 0.3s; }
-        #page-liveScan .ls-item:nth-child(odd) { background:rgba(255,255,255,0.04); }
-        #page-liveScan .ls-item:nth-child(even) { background:rgba(255,255,255,0.08); }
-        #page-liveScan .ls-item.ls-new { background:rgba(76,175,80,0.25); box-shadow:0 0 20px rgba(76,175,80,0.3); }
-        #page-liveScan .ls-time { font-size:1em; color:rgba(255,255,255,0.5); flex-shrink:0; min-width:70px; font-family:monospace; }
-        #page-liveScan .ls-nama { font-size:1.3em; font-weight:700; color:white; flex:1; min-width:0; }
-        #page-liveScan .ls-kelas { font-size:1em; color:rgba(255,255,255,0.6); flex-shrink:0; }
+        #page-liveScan .ls-item { display:flex; align-items:center; gap:16px; padding:14px 20px; border-bottom:1px solid rgba(0,0,0,0.06); animation: liveSlideIn 0.35s ease-out; border-radius:12px; margin-bottom:4px; transition: background 0.3s; }
+        #page-liveScan .ls-item:nth-child(odd) { background:rgba(0,0,0,0.02); }
+        #page-liveScan .ls-item:nth-child(even) { background:rgba(0,0,0,0.04); }
+        #page-liveScan .ls-item.ls-new { background:rgba(76,175,80,0.12); box-shadow:0 2px 12px rgba(76,175,80,0.2); }
+        #page-liveScan .ls-time { font-size:1em; color:#999; flex-shrink:0; min-width:70px; font-family:monospace; }
+        #page-liveScan .ls-nama { font-size:1.3em; font-weight:700; color:#212121; flex:1; min-width:0; }
+        #page-liveScan .ls-kelas { font-size:1em; color:#757575; flex-shrink:0; }
         #page-liveScan .ls-status { flex-shrink:0; font-size:1em; font-weight:700; padding:5px 16px; border-radius:20px; }
-        #page-liveScan .ls-status.hadir { background:#2e7d32; color:white; }
-        #page-liveScan .ls-status.sakit { background:#e65100; color:white; }
-        #page-liveScan .ls-status.izin { background:#1565c0; color:white; }
-        #page-liveScan .ls-status.alpa { background:#c62828; color:white; }
-        #page-liveScan .ls-ket { font-size:0.85em; color:rgba(255,255,255,0.45); flex-shrink:0; max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        #page-liveScan .ls-status.hadir { background:#c8e6c9; color:#2e7d32; }
+        #page-liveScan .ls-status.sakit { background:#ffe0b2; color:#e65100; }
+        #page-liveScan .ls-status.izin { background:#bbdefb; color:#1565c0; }
+        #page-liveScan .ls-status.alpa { background:#ffcdd2; color:#c62828; }
+        #page-liveScan .ls-ket { font-size:0.85em; color:#999; flex-shrink:0; max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
         @keyframes lsCardIn { from { transform:scale(0.7) translateY(30px); opacity:0; } to { transform:scale(1) translateY(0); opacity:1; } }
         @keyframes lsCardPop { 0% { transform:scale(1); } 50% { transform:scale(1.05); } 100% { transform:scale(1); } }
         .ls-single { animation: lsCardIn 0.4s ease-out; }
         .ls-single.ls-pop { animation: lsCardPop 0.5s ease-out; }
         .ls-single .ls-icon { font-size:5em; margin-bottom:16px; }
-        .ls-single .ls-nama-big { font-size:2.2em; font-weight:800; color:white; margin-bottom:8px; }
-        .ls-single .ls-detail { font-size:1.1em; color:rgba(255,255,255,0.7); margin-bottom:6px; }
-        .ls-single .ls-detail strong { color:rgba(255,255,255,0.95); }
+        .ls-single .ls-nama-big { font-size:2.2em; font-weight:800; color:#212121; margin-bottom:8px; }
+        .ls-single .ls-detail { font-size:1.1em; color:#616161; margin-bottom:6px; }
+        .ls-single .ls-detail strong { color:#212121; }
         .ls-single .ls-status-badge { display:inline-block; font-size:1.4em; font-weight:800; padding:10px 36px; border-radius:30px; margin-top:12px; }
-        .ls-single .ls-status-badge.hadir { background:#2e7d32; color:white; }
-        .ls-single .ls-status-badge.sakit { background:#e65100; color:white; }
-        .ls-single .ls-status-badge.izin { background:#1565c0; color:white; }
-        .ls-single .ls-status-badge.alpa { background:#c62828; color:white; }
-        .ls-single .ls-time-big { font-size:1em; color:rgba(255,255,255,0.4); margin-top:16px; font-family:monospace; }
-        .ls-single .ls-ket-big { font-size:0.95em; color:rgba(255,255,255,0.5); margin-top:6px; }
-        #page-liveScan .ls-list-item { display:flex; align-items:center; gap:14px; padding:12px 18px; border-bottom:1px solid rgba(255,255,255,0.06); border-radius:10px; margin-bottom:3px; transition:background 0.2s; }
-        #page-liveScan .ls-list-item:nth-child(odd) { background:rgba(255,255,255,0.04); }
-        #page-liveScan .ls-list-item:nth-child(even) { background:rgba(255,255,255,0.07); }
-        #page-liveScan .ls-list-item.ls-new { background:rgba(76,175,80,0.2); box-shadow:0 0 12px rgba(76,175,80,0.25); }
-        #page-liveScan .ls-list-time { font-size:0.85em; color:rgba(255,255,255,0.4); flex-shrink:0; min-width:65px; font-family:monospace; }
-        #page-liveScan .ls-list-nama { font-size:1.05em; font-weight:700; color:white; flex:1; min-width:0; }
-        #page-liveScan .ls-list-kelas { font-size:0.85em; color:rgba(255,255,255,0.5); flex-shrink:0; }
-        #page-liveScan .ls-list-ket { font-size:0.8em; color:rgba(255,255,255,0.35); flex-shrink:0; max-width:100px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .ls-single .ls-status-badge.hadir { background:#c8e6c9; color:#2e7d32; }
+        .ls-single .ls-status-badge.sakit { background:#ffe0b2; color:#e65100; }
+        .ls-single .ls-status-badge.izin { background:#bbdefb; color:#1565c0; }
+        .ls-single .ls-status-badge.alpa { background:#ffcdd2; color:#c62828; }
+        .ls-single .ls-time-big { font-size:1em; color:#999; margin-top:16px; font-family:monospace; }
+        .ls-single .ls-ket-big { font-size:0.95em; color:#888; margin-top:6px; }
+        #page-liveScan .ls-list-item { display:flex; align-items:center; gap:14px; padding:12px 18px; border-bottom:1px solid rgba(0,0,0,0.05); border-radius:10px; margin-bottom:3px; transition:background 0.2s; }
+        #page-liveScan .ls-list-item:nth-child(odd) { background:rgba(0,0,0,0.02); }
+        #page-liveScan .ls-list-item:nth-child(even) { background:rgba(0,0,0,0.04); }
+        #page-liveScan .ls-list-item.ls-new { background:rgba(76,175,80,0.12); box-shadow:0 2px 8px rgba(76,175,80,0.15); }
+        #page-liveScan .ls-list-time { font-size:0.85em; color:#999; flex-shrink:0; min-width:65px; font-family:monospace; }
+        #page-liveScan .ls-list-nama { font-size:1.05em; font-weight:700; color:#212121; flex:1; min-width:0; }
+        #page-liveScan .ls-list-kelas { font-size:0.85em; color:#757575; flex-shrink:0; }
+        #page-liveScan .ls-list-ket { font-size:0.8em; color:#999; flex-shrink:0; max-width:100px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
         .live-scan-mode .sidebar { display:none !important; }
         .live-scan-mode .main-content { padding:0 !important; overflow:hidden !important; }
         .live-scan-mode .container { overflow:hidden !important; }
@@ -418,8 +418,21 @@
         <div class="menu-item active" onclick="showPage('dashboard', this)">
             <span class="icon">🏠</span> Dashboard
         </div>
-        <div class="menu-item" onclick="showPage('liveScan', this)">
-            <span class="icon">🔴</span> Live Scan
+        <div class="menu-group" id="menuGroupLiveScan">
+            <div class="menu-item menu-parent" onclick="toggleMenuGroup('menuGroupLiveScan')">
+                <span class="icon">🔴</span> Live Scan <span class="arrow">▶</span>
+            </div>
+            <div class="menu-children">
+                <div class="menu-item menu-child" onclick="showPage('liveScan', this)">
+                    <span class="icon">🔴</span> Live Scan
+                </div>
+                <div class="menu-item menu-child" onclick="showPage('siswa', this)">
+                    <span class="icon">👨‍🎓</span> Data Siswa
+                </div>
+                <div class="menu-item menu-child" onclick="showPage('scanQR', this)">
+                    <span class="icon">📷</span> Scan QR
+                </div>
+            </div>
         </div>
         <div class="menu-group" id="menuGroupInput">
             <div class="menu-item menu-parent" onclick="toggleMenuGroup('menuGroupInput')">
@@ -439,12 +452,6 @@
                     <span class="icon">🗓️</span> Atur Jadwal
                 </div>
             </div>
-        </div>
-        <div class="menu-item" onclick="showPage('siswa', this)">
-            <span class="icon">👨‍🎓</span> Data Siswa
-        </div>
-        <div class="menu-item" onclick="showPage('scanQR', this)">
-            <span class="icon">📷</span> Scan QR
         </div>
         <div class="menu-group" id="menuGroupLaporan">
             <div class="menu-item menu-parent" onclick="toggleMenuGroup('menuGroupLaporan')">
@@ -570,9 +577,9 @@
         </div>
 
         <!-- Live Scan Full-Screen -->
-        <div class="page" id="page-liveScan" style="padding:0 !important;background:#0a1628;">
+        <div class="page" id="page-liveScan" style="padding:0 !important;background:#f5f7fa;">
             <div style="display:flex;flex-direction:column;height:calc(100vh - 60px);overflow:hidden;">
-                <div style="background:linear-gradient(135deg,#1a237e,#0d47a1);padding:16px 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+                <div style="background:linear-gradient(135deg,#1a237e,#1565c0);padding:16px 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
                     <div style="display:flex;align-items:center;gap:12px;">
                         <span style="width:14px;height:14px;border-radius:50%;background:#4caf50;display:inline-block;animation:livePulse 1.5s infinite;"></span>
                         <h1 style="color:white;font-size:1.5em;margin:0;">🔴 LIVE SCAN ABSENSI</h1>
@@ -581,30 +588,32 @@
                     <button onclick="tutupLiveScan()" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:white;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:0.9em;">✕ Tutup</button>
                 </div>
                 <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;padding:16px 24px;flex-shrink:0;">
-                    <div onclick="setLsFilter('')" id="lsCardAll" class="ls-stat-card ls-stat-active" style="background:linear-gradient(135deg,#37474f,#546e7a);border-radius:14px;padding:18px 16px;text-align:center;cursor:pointer;transition:all 0.3s;border:2px solid transparent;">
-                        <div id="lsTotal" style="font-size:2.8em;font-weight:800;color:white;">0</div>
-                        <div style="color:rgba(255,255,255,0.85);font-size:0.9em;margin-top:4px;">📋 Semua</div>
+                    <div onclick="setLsFilter('')" id="lsCardAll" class="ls-stat-card ls-stat-active" style="background:linear-gradient(135deg,#e3e8ef,#cfd8dc);border-radius:14px;padding:18px 16px;text-align:center;cursor:pointer;transition:all 0.3s;border:2px solid transparent;">
+                        <div id="lsTotal" style="font-size:2.8em;font-weight:800;color:#37474f;">0</div>
+                        <div style="color:#546e7a;font-size:0.9em;margin-top:4px;">📋 Semua</div>
                     </div>
-                    <div onclick="setLsFilter('Hadir')" id="lsCardHadir" class="ls-stat-card" style="background:linear-gradient(135deg,#1b5e20,#2e7d32);border-radius:14px;padding:18px 16px;text-align:center;cursor:pointer;transition:all 0.3s;border:2px solid transparent;">
-                        <div id="lsHadir" style="font-size:2.8em;font-weight:800;color:white;">0</div>
-                        <div style="color:rgba(255,255,255,0.85);font-size:0.9em;margin-top:4px;">✅ Hadir</div>
+                    <div onclick="setLsFilter('Hadir')" id="lsCardHadir" class="ls-stat-card" style="background:linear-gradient(135deg,#c8e6c9,#a5d6a7);border-radius:14px;padding:18px 16px;text-align:center;cursor:pointer;transition:all 0.3s;border:2px solid transparent;">
+                        <div id="lsHadir" style="font-size:2.8em;font-weight:800;color:#2e7d32;">0</div>
+                        <div style="color:#388e3c;font-size:0.9em;margin-top:4px;">✅ Hadir</div>
                     </div>
-                    <div onclick="setLsFilter('Sakit')" id="lsCardSakit" class="ls-stat-card" style="background:linear-gradient(135deg,#e65100,#f57c00);border-radius:14px;padding:18px 16px;text-align:center;cursor:pointer;transition:all 0.3s;border:2px solid transparent;">
-                        <div id="lsSakit" style="font-size:2.8em;font-weight:800;color:white;">0</div>
-                        <div style="color:rgba(255,255,255,0.85);font-size:0.9em;margin-top:4px;">🤒 Sakit</div>
+                    <div onclick="setLsFilter('Sakit')" id="lsCardSakit" class="ls-stat-card" style="background:linear-gradient(135deg,#ffe0b2,#ffcc80);border-radius:14px;padding:18px 16px;text-align:center;cursor:pointer;transition:all 0.3s;border:2px solid transparent;">
+                        <div id="lsSakit" style="font-size:2.8em;font-weight:800;color:#e65100;">0</div>
+                        <div style="color:#ef6c00;font-size:0.9em;margin-top:4px;">🤒 Sakit</div>
                     </div>
-                    <div onclick="setLsFilter('Izin')" id="lsCardIzin" class="ls-stat-card" style="background:linear-gradient(135deg,#1565c0,#1e88e5);border-radius:14px;padding:18px 16px;text-align:center;cursor:pointer;transition:all 0.3s;border:2px solid transparent;">
-                        <div id="lsIzin" style="font-size:2.8em;font-weight:800;color:white;">0</div>
-                        <div style="color:rgba(255,255,255,0.85);font-size:0.9em;margin-top:4px;">📝 Izin</div>
+                    <div onclick="setLsFilter('Izin')" id="lsCardIzin" class="ls-stat-card" style="background:linear-gradient(135deg,#bbdefb,#90caf9);border-radius:14px;padding:18px 16px;text-align:center;cursor:pointer;transition:all 0.3s;border:2px solid transparent;">
+                        <div id="lsIzin" style="font-size:2.8em;font-weight:800;color:#1565c0;">0</div>
+                        <div style="color:#1976d2;font-size:0.9em;margin-top:4px;">📝 Izin</div>
                     </div>
-                    <div onclick="setLsFilter('Alpa')" id="lsCardAlpa" class="ls-stat-card" style="background:linear-gradient(135deg,#b71c1c,#d32f2f);border-radius:14px;padding:18px 16px;text-align:center;cursor:pointer;transition:all 0.3s;border:2px solid transparent;">
-                        <div id="lsAlpa" style="font-size:2.8em;font-weight:800;color:white;">0</div>
-                        <div style="color:rgba(255,255,255,0.85);font-size:0.9em;margin-top:4px;">⚠️ Alpa</div>
+                    <div onclick="setLsFilter('Alpa')" id="lsCardAlpa" class="ls-stat-card" style="background:linear-gradient(135deg,#ffcdd2,#ef9a9a);border-radius:14px;padding:18px 16px;text-align:center;cursor:pointer;transition:all 0.3s;border:2px solid transparent;">
+                        <div id="lsAlpa" style="font-size:2.8em;font-weight:800;color:#c62828;">0</div>
+                        <div style="color:#d32f2f;font-size:0.9em;margin-top:4px;">⚠️ Alpa</div>
                     </div>
                 </div>
                 <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:0 24px 24px;overflow:hidden;" id="liveScanListBig">
                     <div id="lsSingleCard" style="width:100%;max-width:500px;text-align:center;">
-                        <div style="color:rgba(255,255,255,0.3);font-size:1.4em;padding:40px;">Menunggu scan barcode...</div>
+                        <div style="font-size:3em;margin-bottom:16px;">🏫</div>
+                        <div style="color:#1a237e;font-size:1.8em;font-weight:800;margin-bottom:8px;">SELAMAT DATANG</div>
+                        <div style="color:#1565c0;font-size:1.1em;font-weight:600;">DI SD N 1 SELOPURO</div>
                     </div>
                 </div>
             </div>
@@ -2168,6 +2177,7 @@
     let _liveScanEntries = [];
     let _lsNewIds = new Set();
     let _lsFilter = '';
+    let _lsWelcomeTimer = null;
 
     function tutupLiveScan() {
         const menuDashboard = document.querySelector('.menu-item[onclick*="dashboard"]');
@@ -2217,12 +2227,30 @@
         _liveScanEntries = [];
         _lsNewIds = new Set();
         _lsFilter = '';
+        if (_lsWelcomeTimer) { clearTimeout(_lsWelcomeTimer); _lsWelcomeTimer = null; }
         document.querySelectorAll('.ls-stat-card').forEach(c => c.classList.remove('ls-stat-active'));
         const allCard = document.getElementById('lsCardAll');
         if (allCard) allCard.classList.add('ls-stat-active');
-        updateLiveFeed();
+        _showWelcome();
         _liveFeedTimer = setInterval(updateLiveFeed, 2000);
         _lsPollTimer = setInterval(_lsPollAbsensi, 2000);
+    }
+
+    function _showWelcome() {
+        const listBig = document.getElementById('liveScanListBig');
+        if (!listBig) return;
+        listBig.innerHTML = '<div id="lsSingleCard" style="width:100%;max-width:500px;text-align:center;">'
+            + '<div style="font-size:3em;margin-bottom:16px;">🏫</div>'
+            + '<div style="color:#1a237e;font-size:1.8em;font-weight:800;margin-bottom:8px;">SELAMAT DATANG</div>'
+            + '<div style="color:#1565c0;font-size:1.1em;font-weight:600;">DI SD N 1 SELOPURO</div>'
+            + '</div>';
+    }
+
+    function _lsResetWelcomeTimer() {
+        if (_lsWelcomeTimer) clearTimeout(_lsWelcomeTimer);
+        _lsWelcomeTimer = setTimeout(function() {
+            if (_lsFilter === '') _showWelcome();
+        }, 3000);
     }
 
     function stopLiveFeed() {
@@ -2278,7 +2306,7 @@
         if (!_lsFilter) {
             const latest = _liveScanEntries.length > 0 ? _liveScanEntries[0] : null;
             if (!latest) {
-                listBig.innerHTML = '<div id="lsSingleCard" style="width:100%;max-width:500px;text-align:center;"><div style="color:rgba(255,255,255,0.3);font-size:1.4em;padding:40px;">Menunggu scan barcode...</div></div>';
+                _showWelcome();
             } else {
                 const nama = getNamaSiswa(latest.nisn);
                 const kelas = getKelasSiswa(latest.nisn);
@@ -2288,7 +2316,7 @@
                 const iconMap = { hadir:'✅', sakit:'🤒', izin:'📝', alpa:'⚠️' };
                 const existing = document.getElementById('lsSingleCard');
                 const samePerson = existing && existing.getAttribute('data-nisn') === latest.nisn && existing.getAttribute('data-status') === latest.status;
-                listBig.innerHTML = '<div id="lsSingleCard" class="ls-single' + (samePerson ? ' ls-pop' : '') + '" data-nisn="' + latest.nisn + '" data-status="' + latest.status + '" style="width:100%;max-width:500px;text-align:center;background:rgba(255,255,255,0.06);border-radius:24px;padding:40px 32px;border:2px solid rgba(255,255,255,0.1);backdrop-filter:blur(10px);">'
+                listBig.innerHTML = '<div id="lsSingleCard" class="ls-single' + (samePerson ? ' ls-pop' : '') + '" data-nisn="' + latest.nisn + '" data-status="' + latest.status + '" style="width:100%;max-width:500px;text-align:center;background:white;border-radius:24px;padding:40px 32px;border:2px solid rgba(0,0,0,0.06);box-shadow:0 8px 32px rgba(0,0,0,0.08);">'
                     + '<div class="ls-icon">' + (iconMap[sc] || '📋') + '</div>'
                     + '<div class="ls-nama-big">' + nama + '</div>'
                     + '<div class="ls-detail">NISN: <strong>' + latest.nisn + '</strong></div>'
@@ -2297,11 +2325,12 @@
                     + (latest.ket && latest.ket !== '-' ? '<div class="ls-ket-big">Keterangan: ' + latest.ket + '</div>' : '')
                     + '<div class="ls-time-big">' + (t || '') + ' · ' + formatTanggalIndo(today) + '</div>'
                     + '</div>';
+                _lsResetWelcomeTimer();
             }
         } else {
             const filtered = _liveScanEntries.filter(e => e.status === _lsFilter);
             if (filtered.length === 0) {
-                listBig.innerHTML = '<div style="width:100%;max-width:700px;text-align:center;"><div style="color:rgba(255,255,255,0.3);font-size:1.3em;padding:40px;">Belum ada siswa dengan status <strong>' + _lsFilter + '</strong></div></div>';
+                listBig.innerHTML = '<div style="width:100%;max-width:700px;text-align:center;"><div style="color:#999;font-size:1.3em;padding:40px;">Belum ada siswa dengan status <strong>' + _lsFilter + '</strong></div></div>';
             } else {
                 const grouped = {};
                 filtered.forEach(e => {
@@ -2311,11 +2340,11 @@
                 });
                 const kelasKeys = Object.keys(grouped).sort((a,b) => Number(a) - Number(b));
                 let html = '<div style="width:100%;max-width:700px;">';
-                html += '<div style="color:rgba(255,255,255,0.5);font-size:0.9em;margin-bottom:12px;font-weight:600;">' + _lsFilter + ' (' + filtered.length + ')</div>';
+                html += '<div style="color:#888;font-size:0.9em;margin-bottom:12px;font-weight:600;">' + _lsFilter + ' (' + filtered.length + ')</div>';
                 kelasKeys.forEach(k => {
                     const items = grouped[k];
                     html += '<div style="margin-bottom:16px;">';
-                    html += '<div style="color:rgba(255,255,255,0.7);font-size:0.85em;font-weight:700;padding:6px 12px;background:rgba(255,255,255,0.08);border-radius:8px;margin-bottom:6px;">Kelas ' + k + ' (' + items.length + ')</div>';
+                    html += '<div style="color:#555;font-size:0.85em;font-weight:700;padding:6px 12px;background:rgba(0,0,0,0.04);border-radius:8px;margin-bottom:6px;">Kelas ' + k + ' (' + items.length + ')</div>';
                     items.forEach(e => {
                         const nama = getNamaSiswa(e.nisn);
                         let t = e.time;
@@ -4461,7 +4490,7 @@
 
     async function init() {
         const vEl = document.getElementById('appVersion');
-        if (vEl) vEl.textContent = 'v2026.09.03';
+        if (vEl) vEl.textContent = 'v2026.09.04';
         await _loadFromServer();
         document.getElementById('loadingOverlay').style.display = 'none';
         checkLogin();
