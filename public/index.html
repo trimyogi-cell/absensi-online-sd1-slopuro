@@ -2269,23 +2269,34 @@
         } else {
             const filtered = _liveScanEntries.filter(e => e.status === _lsFilter);
             if (filtered.length === 0) {
-                listBig.innerHTML = '<div style="width:100%;max-width:600px;text-align:center;"><div style="color:rgba(255,255,255,0.3);font-size:1.3em;padding:40px;">Belum ada siswa dengan status <strong>' + _lsFilter + '</strong></div></div>';
+                listBig.innerHTML = '<div style="width:100%;max-width:700px;text-align:center;"><div style="color:rgba(255,255,255,0.3);font-size:1.3em;padding:40px;">Belum ada siswa dengan status <strong>' + _lsFilter + '</strong></div></div>';
             } else {
-                let html = '<div style="width:100%;max-width:600px;"><div style="color:rgba(255,255,255,0.5);font-size:0.9em;margin-bottom:12px;font-weight:600;">' + _lsFilter + ' (' + filtered.length + ')</div>';
-                html += filtered.map((e) => {
-                    const nama = getNamaSiswa(e.nisn);
-                    const kelas = getKelasSiswa(e.nisn);
-                    let t = e.time;
-                    if (t) { try { const d = new Date(t); t = d.toLocaleTimeString('id-ID', {hour:'2-digit',minute:'2-digit',second:'2-digit'}); } catch(ex) {} }
-                    const sc = e.status.toLowerCase();
-                    const isNew = _lsNewIds.has(e.id);
-                    return '<div class="ls-list-item' + (isNew ? ' ls-new' : '') + '">'
-                        + '<span class="ls-list-time">' + (t || '-') + '</span>'
-                        + '<span class="ls-list-nama">' + nama + '</span>'
-                        + '<span class="ls-list-kelas">Kelas ' + kelas + '</span>'
-                        + (e.ket && e.ket !== '-' ? '<span class="ls-list-ket">' + e.ket + '</span>' : '')
-                        + '</div>';
-                }).join('');
+                const grouped = {};
+                filtered.forEach(e => {
+                    const k = getKelasSiswa(e.nisn) || '?';
+                    if (!grouped[k]) grouped[k] = [];
+                    grouped[k].push(e);
+                });
+                const kelasKeys = Object.keys(grouped).sort((a,b) => Number(a) - Number(b));
+                let html = '<div style="width:100%;max-width:700px;">';
+                html += '<div style="color:rgba(255,255,255,0.5);font-size:0.9em;margin-bottom:12px;font-weight:600;">' + _lsFilter + ' (' + filtered.length + ')</div>';
+                kelasKeys.forEach(k => {
+                    const items = grouped[k];
+                    html += '<div style="margin-bottom:16px;">';
+                    html += '<div style="color:rgba(255,255,255,0.7);font-size:0.85em;font-weight:700;padding:6px 12px;background:rgba(255,255,255,0.08);border-radius:8px;margin-bottom:6px;">Kelas ' + k + ' (' + items.length + ')</div>';
+                    items.forEach(e => {
+                        const nama = getNamaSiswa(e.nisn);
+                        let t = e.time;
+                        if (t) { try { const d = new Date(t); t = d.toLocaleTimeString('id-ID', {hour:'2-digit',minute:'2-digit',second:'2-digit'}); } catch(ex) {} }
+                        const isNew = _lsNewIds.has(e.id);
+                        html += '<div class="ls-list-item' + (isNew ? ' ls-new' : '') + '">'
+                            + '<span class="ls-list-time">' + (t || '-') + '</span>'
+                            + '<span class="ls-list-nama">' + nama + '</span>'
+                            + (e.ket && e.ket !== '-' ? '<span class="ls-list-ket">' + e.ket + '</span>' : '')
+                            + '</div>';
+                    });
+                    html += '</div>';
+                });
                 html += '</div>';
                 listBig.innerHTML = html;
             }
@@ -4418,7 +4429,7 @@
 
     async function init() {
         const vEl = document.getElementById('appVersion');
-        if (vEl) vEl.textContent = 'v2026.08.31';
+        if (vEl) vEl.textContent = 'v2026.09.01';
         await _loadFromServer();
         document.getElementById('loadingOverlay').style.display = 'none';
         checkLogin();
@@ -4655,33 +4666,43 @@
 
         const el = document.getElementById('kartuQRPrint');
         el.innerHTML = '';
-        try {
-            for (const s of siswa) {
-                const url = qrDataUrl('ABSENSI:' + s.nisn);
-                el.innerHTML +=
-                    '<div class="qr-card">' +
-                        '<div class="qr-school">ABSENSI SD NEGERI 1 SLOPURO</div>' +
-                        '<img class="qr-img" src="' + url + '" alt="QR">' +
-                        '<div class="qr-nama">' + s.nama + '</div>' +
-                        '<div class="qr-meta">NISN: ' + s.nisn + ' | Kelas ' + s.kelas + '</div>' +
-                    '</div>';
-            }
-            document.body.classList.add('printing-cards');
+        const urls = [];
+        for (const s of siswa) {
+            const url = qrDataUrl('ABSENSI:' + s.nisn);
+            urls.push({ url, nama: s.nama, nisn: s.nisn, kelas: s.kelas });
+        }
+        el.innerHTML = urls.map(u =>
+            '<div class="qr-card">' +
+                '<div class="qr-school">ABSENSI SD NEGERI 1 SLOPURO</div>' +
+                '<img class="qr-img" src="' + u.url + '" alt="QR">' +
+                '<div class="qr-nama">' + u.nama + '</div>' +
+                '<div class="qr-meta">NISN: ' + u.nisn + ' | Kelas ' + u.kelas + '</div>' +
+            '</div>'
+        ).join('');
+        document.body.classList.add('printing-cards');
+        setTimeout(() => {
             window.print();
-        } catch (err) {
-            alert('Gagal membuat kartu QR: ' + err.message);
-        } finally {
             document.body.classList.remove('printing-cards');
             el.innerHTML = '';
-        }
+        }, 500);
     }
 
     function qrDataUrl(text) {
         const div = document.createElement('div');
+        div.style.position = 'fixed';
+        div.style.left = '-9999px';
+        document.body.appendChild(div);
         new QRCode(div, { text: text, width: 300, height: 300, correctLevel: QRCode.CorrectLevel.M });
         const canvas = div.querySelector('canvas');
-        if (!canvas) throw new Error('Canvas QR tidak tersedia di browser ini');
-        return canvas.toDataURL('image/png');
+        let url = '';
+        if (canvas) {
+            url = canvas.toDataURL('image/png');
+        } else {
+            const img = div.querySelector('img');
+            if (img) url = img.src;
+        }
+        document.body.removeChild(div);
+        return url;
     }
 
     init();
