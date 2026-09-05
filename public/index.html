@@ -4501,7 +4501,7 @@
 
     async function init() {
         const vEl = document.getElementById('appVersion');
-        if (vEl) vEl.textContent = 'v2026.09.19';
+        if (vEl) vEl.textContent = 'v2026.09.20';
         await _loadFromServer();
         document.getElementById('loadingOverlay').style.display = 'none';
         checkLogin();
@@ -4540,8 +4540,10 @@
     let _qrListEl = null;
     let _qrReaderId = '';
     let _pendingScan = null;
+    let _qrScannerPaused = false;
 
     function hentikanQr() {
+        _qrScannerPaused = false;
         if (_qrScanner) {
             try { _qrScanner.stop().then(() => _qrScanner.clear()).catch(() => {}); } catch (e) {}
             _qrScanner = null;
@@ -4580,6 +4582,13 @@
     }
 
     function berhentiSementara() {
+        if (_qrScanner && typeof _qrScanner.pause === 'function') {
+            try {
+                _qrScanner.pause(true);
+                _qrScannerPaused = true;
+                return;
+            } catch (e) {}
+        }
         if (_qrScanner) {
             try { _qrScanner.stop().catch(() => {}); } catch (e) {}
         }
@@ -4591,7 +4600,7 @@
                 _qrStatusEl.textContent = 'Siap scan berikutnya...';
                 _qrStatusEl.style.color = '#0f9d58';
             }
-            mulaiQrReader(_qrReaderId, _qrStatusEl, _qrListEl);
+            _qrResumeHelper();
         }, 500);
     }
 
@@ -4601,8 +4610,19 @@
                 _qrStatusEl.textContent = 'Siap scan berikutnya...';
                 _qrStatusEl.style.color = '#0f9d58';
             }
-            mulaiQrReader(_qrReaderId, _qrStatusEl, _qrListEl);
+            _qrResumeHelper();
         }, 900);
+    }
+
+    function _qrResumeHelper() {
+        if (_qrScanner && _qrScannerPaused && typeof _qrScanner.resume === 'function') {
+            try {
+                _qrScanner.resume();
+                _qrScannerPaused = false;
+                return;
+            } catch (e) {}
+        }
+        mulaiQrReader(_qrReaderId, _qrStatusEl, _qrListEl);
     }
 
     function mulaiQrReader(readerId, statusEl, listEl) {
@@ -4622,7 +4642,7 @@
         const cfg = _cameraConfig();
         _qrScanner.start(
             cfg,
-            { fps: 10, qrbox: { width: 220, height: 220 } },
+            { fps: 8, qrbox: { width: 220, height: 220 } },
             onQRDecoded,
             () => {}
         ).catch(function(err) {
@@ -4633,7 +4653,7 @@
                 _qrScanner = new Html5Qrcode(readerId);
                 _qrScanner.start(
                     { facingMode: 'user' },
-                    { fps: 10, qrbox: { width: 220, height: 220 } },
+                    { fps: 8, qrbox: { width: 220, height: 220 } },
                     onQRDecoded,
                     () => {}
                 ).catch(function(err2) {
